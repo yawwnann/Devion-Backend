@@ -1,0 +1,1 @@
+{"version":3,"file":"create-event.dto.js","sourceRoot":"","sources":["../../../../src/analytics/dto/create-event.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAA6E;AAE7E,MAAa,cAAc;IAGzB,SAAS,CAAS;IAIlB,SAAS,CAAuB;CACjC;AARD,wCAQC;AALC;IAFC,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;;iDACK;AAIlB;IAFC,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;;iDACmB"}

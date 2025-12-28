@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== USER ====================
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String?
+  avatar        String?  // Cloudinary URL
+  googleId      String   @unique @map("google_id")
+  githubUsername String? @map("github_username")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  pages         Page[]
+  githubRepos   GitHubRepo[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("users")
+}
+
+// ==================== PAGE ====================
+model Page {
+  id          String   @id @default(uuid())
+  title       String   @default("Untitled")
+  icon        String?  // emoji or image URL
+  cover       String?  // Cloudinary URL
+  isArchived  Boolean  @default(false) @map("is_archived")
+  isFavorite  Boolean  @default(false) @map("is_favorite")
+  
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  parentId    String?  @map("parent_id")
+  parent      Page?    @relation("PageToSubpages", fields: [parentId], references: [id], onDelete: Cascade)
+  subpages    Page[]   @relation("PageToSubpages")
+  
+  blocks      Block[]
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([parentId])
+  @@map("pages")
+}
+
+// ==================== BLOCK ====================
+model Block {
+  id            String   @id @default(uuid())
+  type          String   // text, heading, todo, code, image, embed, chart, etc.
+  content       Json     @default("{}") // flexible JSON content
+  order         Int      @default(0)    // position within parent
+  
+  pageId        String   @map("page_id")
+  page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  
+  parentBlockId String?  @map("parent_block_id")
+  parentBlock   Block?   @relation("BlockToChildren", fields: [parentBlockId], references: [id], onDelete: Cascade)
+  children      Block[]  @relation("BlockToChildren")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([pageId])
+  @@index([parentBlockId])
+  @@index([pageId, order])
+  @@map("blocks")
+}
+
+// ==================== GITHUB ====================
+model GitHubRepo {
+  id              String   @id @default(uuid())
+  repoId          Int      @map("repo_id") // GitHub's repo ID
+  name            String
+  fullName        String   @map("full_name")
+  description     String?
+  url             String
+  language        String?
+  stars           Int      @default(0)
+  forks           Int      @default(0)
+  openIssues      Int      @default(0) @map("open_issues")
+  isPrivate       Boolean  @default(false) @map("is_private")
+  
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  stats           GitHubRepoStat[]
+  
+  lastSyncedAt    DateTime @map("last_synced_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, repoId])
+  @@index([userId])
+  @@map("github_repos")
+}
+
+model GitHubRepoStat {
+  id          String   @id @default(uuid())
+  repoId      String   @map("repo_id")
+  repo        GitHubRepo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  
+  stars       Int      @default(0)
+  forks       Int      @default(0)
+  commits     Int      @default(0)
+  
+  recordedAt  DateTime @map("recorded_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([repoId])
+  @@index([repoId, recordedAt])
+  @@map("github_repo_stats")
+}
+
+// ==================== ANALYTICS ====================
+model AnalyticsEvent {
+  id          String   @id @default(uuid())
+  eventType   String   @map("event_type") // page_view, block_created, etc.
+  eventData   Json     @default("{}") @map("event_data")
+  
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("analytics_events")
+}
