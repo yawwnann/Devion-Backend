@@ -8,7 +8,6 @@ export declare class GithubController {
         synced: number;
     }>;
     getRepos(user: User): Promise<{
-        url: string;
         id: string;
         name: string;
         createdAt: Date;
@@ -17,6 +16,7 @@ export declare class GithubController {
         repoId: number;
         fullName: string;
         description: string | null;
+        url: string;
         language: string | null;
         stars: number;
         forks: number;

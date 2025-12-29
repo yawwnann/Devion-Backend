@@ -25,6 +25,7 @@ model User {
   projects        Project[]
   categories      ProjectCategory[]
   paymentMethods  PaymentMethod[]
+  projectPageSettings ProjectPageSettings?
 
   @@map("users")
 }
@@ -198,4 +199,21 @@ model Project {
   @@index([categoryId])
   @@index([paymentId])
   @@map("projects")
+}
+
+// Project Page Settings (cover, title, description)
+model ProjectPageSettings {
+  id          String   @id @default(uuid())
+  cover       String?  // Cloudinary URL for cover image
+  icon        String?  // Emoji or icon
+  title       String   @default("DATA PROJECT")
+  description String?
+  
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("project_page_settings")
 }

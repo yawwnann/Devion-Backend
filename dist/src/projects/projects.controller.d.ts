@@ -1,9 +1,55 @@
 import type { User } from '@prisma/client';
 import { ProjectsService } from './projects.service';
+import { ProjectSettingsService } from './project-settings.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 export declare class ProjectsController {
     private projectsService;
-    constructor(projectsService: ProjectsService);
+    private settingsService;
+    constructor(projectsService: ProjectsService, settingsService: ProjectSettingsService);
+    getSettings(user: User): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        icon: string | null;
+        cover: string | null;
+        userId: string;
+        description: string | null;
+    }>;
+    updateSettings(user: User, dto: {
+        title?: string;
+        description?: string;
+        icon?: string;
+    }): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        icon: string | null;
+        cover: string | null;
+        userId: string;
+        description: string | null;
+    }>;
+    uploadCover(user: User, file: Express.Multer.File): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        icon: string | null;
+        cover: string | null;
+        userId: string;
+        description: string | null;
+    }>;
+    removeCover(user: User): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        icon: string | null;
+        cover: string | null;
+        userId: string;
+        description: string | null;
+    }>;
     create(user: User, dto: CreateProjectDto): Promise<{
         id: string;
         name: string;
@@ -12,10 +58,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     findAll(user: User): Promise<({
         category: {
@@ -42,10 +88,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        categoryId: string | null;
+        paymentId: string | null;
     })[]>;
     getStats(user: User): Promise<{
         total: number;
@@ -61,10 +107,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     update(id: string, user: User, dto: UpdateProjectDto): Promise<{
         id: string;
@@ -74,10 +120,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
@@ -87,9 +133,9 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
 }

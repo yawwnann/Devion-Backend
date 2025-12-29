@@ -11,17 +11,34 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectsController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const projects_service_1 = require("./projects.service");
+const project_settings_service_1 = require("./project-settings.service");
 const dto_1 = require("./dto");
 const jwt_guard_1 = require("../auth/guards/jwt.guard");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let ProjectsController = class ProjectsController {
     projectsService;
-    constructor(projectsService) {
+    settingsService;
+    constructor(projectsService, settingsService) {
         this.projectsService = projectsService;
+        this.settingsService = settingsService;
+    }
+    getSettings(user) {
+        return this.settingsService.getSettings(user.id);
+    }
+    updateSettings(user, dto) {
+        return this.settingsService.updateSettings(user.id, dto);
+    }
+    uploadCover(user, file) {
+        return this.settingsService.uploadCover(user.id, file);
+    }
+    removeCover(user) {
+        return this.settingsService.removeCover(user.id);
     }
     create(user, dto) {
         return this.projectsService.create(user.id, dto);
@@ -43,6 +60,37 @@ let ProjectsController = class ProjectsController {
     }
 };
 exports.ProjectsController = ProjectsController;
+__decorate([
+    (0, common_1.Get)('settings'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ProjectsController.prototype, "getSettings", null);
+__decorate([
+    (0, common_1.Patch)('settings'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], ProjectsController.prototype, "updateSettings", null);
+__decorate([
+    (0, common_1.Post)('settings/cover'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof Express !== "undefined" && (_a = Express.Multer) !== void 0 && _a.File) === "function" ? _b : Object]),
+    __metadata("design:returntype", void 0)
+], ProjectsController.prototype, "uploadCover", null);
+__decorate([
+    (0, common_1.Delete)('settings/cover'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ProjectsController.prototype, "removeCover", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
@@ -93,6 +141,7 @@ __decorate([
 exports.ProjectsController = ProjectsController = __decorate([
     (0, common_1.Controller)('projects'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
-    __metadata("design:paramtypes", [projects_service_1.ProjectsService])
+    __metadata("design:paramtypes", [projects_service_1.ProjectsService,
+        project_settings_service_1.ProjectSettingsService])
 ], ProjectsController);
 //# sourceMappingURL=projects.controller.js.map

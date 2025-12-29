@@ -9,7 +9,6 @@ export declare class GithubService {
         synced: number;
     }>;
     getRepos(userId: string): Promise<{
-        url: string;
         id: string;
         name: string;
         createdAt: Date;
@@ -18,6 +17,7 @@ export declare class GithubService {
         repoId: number;
         fullName: string;
         description: string | null;
+        url: string;
         language: string | null;
         stars: number;
         forks: number;
