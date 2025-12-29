@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { PagesService } from './pages.service';
@@ -40,13 +41,13 @@ export class PagesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.pagesService.findOne(id, user.id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
     @Body() dto: UpdatePageDto,
   ) {
@@ -54,7 +55,7 @@ export class PagesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: User) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.pagesService.remove(id, user.id);
   }
 }

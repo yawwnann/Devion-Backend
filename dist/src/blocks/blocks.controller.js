@@ -53,7 +53,7 @@ __decorate([
 ], BlocksController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)('page/:pageId'),
-    __param(0, (0, common_1.Param)('pageId')),
+    __param(0, (0, common_1.Param)('pageId', common_1.ParseUUIDPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
@@ -61,7 +61,7 @@ __decorate([
 ], BlocksController.prototype, "findByPage", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
@@ -69,7 +69,7 @@ __decorate([
 ], BlocksController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -78,7 +78,7 @@ __decorate([
 ], BlocksController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
@@ -86,7 +86,7 @@ __decorate([
 ], BlocksController.prototype, "remove", null);
 __decorate([
     (0, common_1.Post)('page/:pageId/reorder'),
-    __param(0, (0, common_1.Param)('pageId')),
+    __param(0, (0, common_1.Param)('pageId', common_1.ParseUUIDPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __param(2, (0, common_1.Body)('blockIds')),
     __metadata("design:type", Function),

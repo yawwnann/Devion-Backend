@@ -9,8 +9,8 @@ export declare class GithubController {
     }>;
     getRepos(user: User): Promise<{
         url: string;
-        name: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
 
@@ -20,24 +21,43 @@ interface GitHubRepoResponse {
 
 @Injectable()
 export class GithubService {
+  private readonly logger = new Logger(GithubService.name);
   private readonly GITHUB_API = 'https://api.github.com';
   private readonly CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
 
   constructor(private prisma: PrismaService) {}
 
   async setUsername(userId: string, username: string) {
+    // Sanitize username
+    const sanitizedUsername = username.trim().toLowerCase();
+
+    if (!/^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i.test(sanitizedUsername)) {
+      throw new BadRequestException('Invalid GitHub username format');
+    }
+
     // Verify GitHub user exists
-    const response = await fetch(`${this.GITHUB_API}/users/${username}`);
-    if (!response.ok) {
-      throw new BadRequestException('GitHub user not found');
+    try {
+      const response = await fetch(
+        `${this.GITHUB_API}/users/${sanitizedUsername}`,
+        {
+          headers: { 'User-Agent': 'Devion-App' },
+        },
+      );
+
+      if (!response.ok) {
+        throw new BadRequestException('GitHub user not found');
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(`GitHub API error: ${error}`);
+      throw new BadRequestException('Failed to verify GitHub user');
     }
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { githubUsername: username },
+      data: { githubUsername: sanitizedUsername },
     });
 
-    // Sync repos immediately
     return this.syncRepos(userId);
   }
 
@@ -51,7 +71,6 @@ export class GithubService {
       throw new NotFoundException('GitHub username not set');
     }
 
-    // Check if we need to sync
     const lastRepo = await this.prisma.gitHubRepo.findFirst({
       where: { userId },
       orderBy: { lastSyncedAt: 'desc' },
@@ -62,7 +81,11 @@ export class GithubService {
       Date.now() - lastRepo.lastSyncedAt.getTime() > this.CACHE_DURATION;
 
     if (needsSync) {
-      await this.syncRepos(userId);
+      try {
+        await this.syncRepos(userId);
+      } catch (error) {
+        this.logger.warn(`Sync failed, returning cached data: ${error}`);
+      }
     }
 
     return this.prisma.gitHubRepo.findMany({
@@ -83,6 +106,7 @@ export class GithubService {
 
     const response = await fetch(
       `${this.GITHUB_API}/users/${user.githubUsername}/repos?per_page=100&sort=updated`,
+      { headers: { 'User-Agent': 'Devion-App' } },
     );
 
     if (!response.ok) {
@@ -91,53 +115,59 @@ export class GithubService {
 
     const repos: GitHubRepoResponse[] = await response.json();
     const now = new Date();
+    const publicRepos = repos.filter((r) => !r.private);
 
-    for (const repo of repos) {
-      if (repo.private) continue; // Skip private repos
-
-      await this.prisma.gitHubRepo.upsert({
-        where: { userId_repoId: { userId, repoId: repo.id } },
-        create: {
-          userId,
-          repoId: repo.id,
-          name: repo.name,
-          fullName: repo.full_name,
-          description: repo.description,
-          url: repo.html_url,
-          language: repo.language,
-          stars: repo.stargazers_count,
-          forks: repo.forks_count,
-          openIssues: repo.open_issues_count,
-          lastSyncedAt: now,
-        },
-        update: {
-          name: repo.name,
-          fullName: repo.full_name,
-          description: repo.description,
-          url: repo.html_url,
-          language: repo.language,
-          stars: repo.stargazers_count,
-          forks: repo.forks_count,
-          openIssues: repo.open_issues_count,
-          lastSyncedAt: now,
-        },
-      });
-
-      // Record stats for time-series
-      await this.prisma.gitHubRepoStat.create({
-        data: {
-          repoId: (await this.prisma.gitHubRepo.findUnique({
+    // Use transaction with increased timeout for many repos
+    await this.prisma.$transaction(
+      async (tx) => {
+        for (const repo of publicRepos) {
+          const dbRepo = await tx.gitHubRepo.upsert({
             where: { userId_repoId: { userId, repoId: repo.id } },
-          }))!.id,
-          stars: repo.stargazers_count,
-          forks: repo.forks_count,
-          commits: 0, // Would need separate API call
-          recordedAt: now,
-        },
-      });
-    }
+            create: {
+              userId,
+              repoId: repo.id,
+              name: repo.name,
+              fullName: repo.full_name,
+              description: repo.description,
+              url: repo.html_url,
+              language: repo.language,
+              stars: repo.stargazers_count,
+              forks: repo.forks_count,
+              openIssues: repo.open_issues_count,
+              lastSyncedAt: now,
+            },
+            update: {
+              name: repo.name,
+              fullName: repo.full_name,
+              description: repo.description,
+              url: repo.html_url,
+              language: repo.language,
+              stars: repo.stargazers_count,
+              forks: repo.forks_count,
+              openIssues: repo.open_issues_count,
+              lastSyncedAt: now,
+            },
+          });
 
-    return { synced: repos.filter((r) => !r.private).length };
+          // Record stats
+          await tx.gitHubRepoStat.create({
+            data: {
+              repoId: dbRepo.id,
+              stars: repo.stargazers_count,
+              forks: repo.forks_count,
+              commits: 0,
+              recordedAt: now,
+            },
+          });
+        }
+      },
+      {
+        maxWait: 15000, // 15 seconds
+        timeout: 30000, // 30 seconds
+      },
+    );
+
+    return { synced: publicRepos.length };
   }
 
   async getRepoStats(userId: string, repoId: string, days = 30) {
@@ -146,8 +176,9 @@ export class GithubService {
       select: { userId: true },
     });
 
-    if (!repo) throw new NotFoundException('Repo not found');
-    if (repo.userId !== userId) throw new NotFoundException('Repo not found');
+    if (!repo || repo.userId !== userId) {
+      throw new NotFoundException('Repo not found');
+    }
 
     const since = new Date();
     since.setDate(since.getDate() - days);

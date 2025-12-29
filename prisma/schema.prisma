@@ -12,7 +12,8 @@ model User {
   email         String   @unique
   name          String?
   avatar        String?  // Cloudinary URL
-  googleId      String   @unique @map("google_id")
+  password      String?  // hashed password (null for OAuth users)
+  googleId      String?  @unique @map("google_id") // nullable for email/password users
   githubUsername String? @map("github_username")
   
   createdAt     DateTime @default(now()) @map("created_at")

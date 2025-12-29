@@ -14,29 +14,59 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const google_guard_1 = require("./guards/google.guard");
 const jwt_guard_1 = require("./guards/jwt.guard");
 const current_user_decorator_1 = require("./decorators/current-user.decorator");
+const dto_1 = require("./dto");
 let AuthController = class AuthController {
     authService;
-    constructor(authService) {
+    configService;
+    constructor(authService, configService) {
         this.authService = authService;
+        this.configService = configService;
+    }
+    async register(dto) {
+        return this.authService.register(dto.email, dto.password, dto.name);
+    }
+    async login(dto) {
+        return this.authService.login(dto.email, dto.password);
     }
     googleAuth() {
     }
     async googleCallback(req, res) {
         const user = await this.authService.validateGoogleUser(req.user);
         const tokens = this.authService.generateTokens(user.id, user.email);
-        res.redirect(`http://localhost:5173/auth/callback?token=${tokens.accessToken}`);
+        const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:5173');
+        res.redirect(`${frontendUrl}/auth/callback?token=${tokens.accessToken}`);
     }
     getMe(user) {
-        return user;
+        const { googleId, password, ...safeUser } = user;
+        return safeUser;
     }
 };
 exports.AuthController = AuthController;
 __decorate([
+    (0, common_1.Post)('register'),
+    (0, throttler_1.SkipThrottle)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [dto_1.RegisterDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "register", null);
+__decorate([
+    (0, common_1.Post)('login'),
+    (0, throttler_1.SkipThrottle)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [dto_1.LoginDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "login", null);
+__decorate([
     (0, common_1.Get)('google'),
+    (0, throttler_1.SkipThrottle)(),
     (0, common_1.UseGuards)(google_guard_1.GoogleAuthGuard),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -44,6 +74,7 @@ __decorate([
 ], AuthController.prototype, "googleAuth", null);
 __decorate([
     (0, common_1.Get)('google/callback'),
+    (0, throttler_1.SkipThrottle)(),
     (0, common_1.UseGuards)(google_guard_1.GoogleAuthGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Res)()),
@@ -61,6 +92,7 @@ __decorate([
 ], AuthController.prototype, "getMe", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        config_1.ConfigService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

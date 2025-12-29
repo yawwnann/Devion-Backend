@@ -12,11 +12,12 @@ export declare class JwtStrategy extends JwtStrategy_base {
     private prisma;
     constructor(configService: ConfigService, prisma: PrismaService);
     validate(payload: JwtPayload): Promise<{
-        googleId: string;
+        id: string;
         email: string;
+        googleId: string | null;
         name: string | null;
         avatar: string | null;
-        id: string;
+        password: string | null;
         githubUsername: string | null;
         createdAt: Date;
         updatedAt: Date;

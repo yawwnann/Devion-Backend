@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma';
 export declare class GithubService {
     private prisma;
+    private readonly logger;
     private readonly GITHUB_API;
     private readonly CACHE_DURATION;
     constructor(prisma: PrismaService);
@@ -9,8 +10,8 @@ export declare class GithubService {
     }>;
     getRepos(userId: string): Promise<{
         url: string;
-        name: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;

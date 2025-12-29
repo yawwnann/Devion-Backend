@@ -10,12 +10,19 @@ export declare class AuthService {
     private prisma;
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
+    register(email: string, password: string, name: string): Promise<{
+        accessToken: string;
+    }>;
+    login(email: string, password: string): Promise<{
+        accessToken: string;
+    }>;
     validateGoogleUser(googleUser: GoogleUser): Promise<{
-        googleId: string;
+        id: string;
         email: string;
+        googleId: string | null;
         name: string | null;
         avatar: string | null;
-        id: string;
+        password: string | null;
         githubUsername: string | null;
         createdAt: Date;
         updatedAt: Date;

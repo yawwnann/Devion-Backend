@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { BlocksService } from './blocks.service';
@@ -25,18 +26,21 @@ export class BlocksController {
   }
 
   @Get('page/:pageId')
-  findByPage(@Param('pageId') pageId: string, @CurrentUser() user: User) {
+  findByPage(
+    @Param('pageId', ParseUUIDPipe) pageId: string,
+    @CurrentUser() user: User,
+  ) {
     return this.blocksService.findByPage(pageId, user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.blocksService.findOne(id, user.id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
     @Body() dto: UpdateBlockDto,
   ) {
@@ -44,13 +48,13 @@ export class BlocksController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: User) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.blocksService.remove(id, user.id);
   }
 
   @Post('page/:pageId/reorder')
   reorder(
-    @Param('pageId') pageId: string,
+    @Param('pageId', ParseUUIDPipe) pageId: string,
     @CurrentUser() user: User,
     @Body('blockIds') blockIds: string[],
   ) {

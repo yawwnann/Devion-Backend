@@ -1,19 +1,19 @@
+import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import type { User } from '@prisma/client';
 import { AuthService } from './auth.service';
+import { RegisterDto, LoginDto } from './dto';
 export declare class AuthController {
     private authService;
-    constructor(authService: AuthService);
+    private configService;
+    constructor(authService: AuthService, configService: ConfigService);
+    register(dto: RegisterDto): Promise<{
+        accessToken: string;
+    }>;
+    login(dto: LoginDto): Promise<{
+        accessToken: string;
+    }>;
     googleAuth(): void;
     googleCallback(req: any, res: Response): Promise<void>;
-    getMe(user: User): {
-        googleId: string;
-        email: string;
-        name: string | null;
-        avatar: string | null;
-        id: string;
-        githubUsername: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-    };
+    getMe(user: User): any;
 }
