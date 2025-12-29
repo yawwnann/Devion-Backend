@@ -29,20 +29,28 @@ export class BlocksService {
   }
 
   async findByPage(pageId: string, userId: string) {
-    await this.verifyPageOwnership(pageId, userId);
-
-    return this.prisma.block.findMany({
-      where: { pageId, parentBlockId: null },
-      orderBy: { order: 'asc' },
+    // Verify ownership and get blocks in one query
+    const page = await this.prisma.page.findUnique({
+      where: { id: pageId, userId },
       include: {
-        children: {
+        blocks: {
+          where: { parentBlockId: null },
           orderBy: { order: 'asc' },
           include: {
-            children: { orderBy: { order: 'asc' } },
+            children: {
+              orderBy: { order: 'asc' },
+              include: {
+                children: { orderBy: { order: 'asc' } },
+              },
+            },
           },
         },
       },
     });
+
+    if (!page) throw new NotFoundException('Page not found or access denied');
+
+    return page.blocks;
   }
 
   async findOne(id: string, userId: string) {

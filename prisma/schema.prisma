@@ -19,9 +19,12 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  pages         Page[]
-  githubRepos   GitHubRepo[]
+  pages           Page[]
+  githubRepos     GitHubRepo[]
   analyticsEvents AnalyticsEvent[]
+  projects        Project[]
+  categories      ProjectCategory[]
+  paymentMethods  PaymentMethod[]
 
   @@map("users")
 }
@@ -136,4 +139,63 @@ model AnalyticsEvent {
   @@index([userId, createdAt])
   @@index([eventType, createdAt])
   @@map("analytics_events")
+}
+
+
+// ==================== PROJECT MANAGEMENT ====================
+model ProjectCategory {
+  id        String    @id @default(uuid())
+  name      String
+  color     String    @default("gray") // Badge color
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects  Project[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("project_categories")
+}
+
+model PaymentMethod {
+  id        String    @id @default(uuid())
+  name      String
+  color     String    @default("gray") // Badge color
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects  Project[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+model Project {
+  id          String           @id @default(uuid())
+  name        String
+  order       String?          // Client/Order name
+  status      String           @default("TODO") // TODO, IN_PROGRESS, DONE
+  information String?          // Additional notes
+  orderNum    Int              @default(autoincrement()) @map("order_num")
+  
+  categoryId  String?          @map("category_id")
+  category    ProjectCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  paymentId   String?          @map("payment_id")
+  payment     PaymentMethod?   @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  
+  userId      String           @map("user_id")
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([categoryId])
+  @@index([paymentId])
+  @@map("projects")
 }

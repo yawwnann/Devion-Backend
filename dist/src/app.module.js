@@ -18,6 +18,9 @@ const blocks_1 = require("./blocks");
 const github_1 = require("./github");
 const analytics_1 = require("./analytics");
 const health_module_1 = require("./health/health.module");
+const projects_module_1 = require("./projects/projects.module");
+const project_categories_module_1 = require("./project-categories/project-categories.module");
+const payment_methods_module_1 = require("./payment-methods/payment-methods.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -44,6 +47,9 @@ exports.AppModule = AppModule = __decorate([
             github_1.GithubModule,
             analytics_1.AnalyticsModule,
             health_module_1.HealthModule,
+            projects_module_1.ProjectsModule,
+            project_categories_module_1.ProjectCategoriesModule,
+            payment_methods_module_1.PaymentMethodsModule,
         ],
         providers: [
             {

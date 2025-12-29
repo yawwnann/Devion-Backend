@@ -97,9 +97,9 @@ export declare class PagesService {
                 updatedAt: Date;
                 parentBlockId: string | null;
                 order: number;
+                pageId: string;
                 type: string;
                 content: import("@prisma/client/runtime/client").JsonValue;
-                pageId: string;
             }[];
         } & {
             id: string;
@@ -107,9 +107,9 @@ export declare class PagesService {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         })[];
     } & {
         id: string;

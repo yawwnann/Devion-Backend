@@ -10,9 +10,9 @@ export declare class BlocksService {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         }[];
     } & {
         id: string;
@@ -20,9 +20,9 @@ export declare class BlocksService {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     findByPage(pageId: string, userId: string): Promise<({
         children: ({
@@ -32,9 +32,9 @@ export declare class BlocksService {
                 updatedAt: Date;
                 parentBlockId: string | null;
                 order: number;
+                pageId: string;
                 type: string;
                 content: import("@prisma/client/runtime/client").JsonValue;
-                pageId: string;
             }[];
         } & {
             id: string;
@@ -42,9 +42,9 @@ export declare class BlocksService {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         })[];
     } & {
         id: string;
@@ -52,9 +52,9 @@ export declare class BlocksService {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     })[]>;
     findOne(id: string, userId: string): Promise<{
         page: {
@@ -66,9 +66,9 @@ export declare class BlocksService {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         }[];
     } & {
         id: string;
@@ -76,9 +76,9 @@ export declare class BlocksService {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     update(id: string, userId: string, dto: UpdateBlockDto): Promise<{
         children: {
@@ -87,9 +87,9 @@ export declare class BlocksService {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         }[];
     } & {
         id: string;
@@ -97,9 +97,9 @@ export declare class BlocksService {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
@@ -107,9 +107,9 @@ export declare class BlocksService {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     reorder(pageId: string, userId: string, blockIds: string[]): Promise<{
         success: boolean;

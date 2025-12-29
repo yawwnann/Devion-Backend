@@ -11,9 +11,9 @@ export declare class BlocksController {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         }[];
     } & {
         id: string;
@@ -21,9 +21,9 @@ export declare class BlocksController {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     findByPage(pageId: string, user: User): Promise<({
         children: ({
@@ -33,9 +33,9 @@ export declare class BlocksController {
                 updatedAt: Date;
                 parentBlockId: string | null;
                 order: number;
+                pageId: string;
                 type: string;
                 content: import("@prisma/client/runtime/client").JsonValue;
-                pageId: string;
             }[];
         } & {
             id: string;
@@ -43,9 +43,9 @@ export declare class BlocksController {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         })[];
     } & {
         id: string;
@@ -53,9 +53,9 @@ export declare class BlocksController {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     })[]>;
     findOne(id: string, user: User): Promise<{
         page: {
@@ -67,9 +67,9 @@ export declare class BlocksController {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         }[];
     } & {
         id: string;
@@ -77,9 +77,9 @@ export declare class BlocksController {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     update(id: string, user: User, dto: UpdateBlockDto): Promise<{
         children: {
@@ -88,9 +88,9 @@ export declare class BlocksController {
             updatedAt: Date;
             parentBlockId: string | null;
             order: number;
+            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
-            pageId: string;
         }[];
     } & {
         id: string;
@@ -98,9 +98,9 @@ export declare class BlocksController {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
@@ -108,9 +108,9 @@ export declare class BlocksController {
         updatedAt: Date;
         parentBlockId: string | null;
         order: number;
+        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
-        pageId: string;
     }>;
     reorder(pageId: string, user: User, blockIds: string[]): Promise<{
         success: boolean;

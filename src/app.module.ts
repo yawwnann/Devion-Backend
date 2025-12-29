@@ -9,6 +9,9 @@ import { BlocksModule } from './blocks';
 import { GithubModule } from './github';
 import { AnalyticsModule } from './analytics';
 import { HealthModule } from './health/health.module';
+import { ProjectsModule } from './projects/projects.module';
+import { ProjectCategoriesModule } from './project-categories/project-categories.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { HealthModule } from './health/health.module';
     GithubModule,
     AnalyticsModule,
     HealthModule,
+    ProjectsModule,
+    ProjectCategoriesModule,
+    PaymentMethodsModule,
   ],
   providers: [
     {
