@@ -12,6 +12,7 @@ import { HealthModule } from './health/health.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ProjectCategoriesModule } from './project-categories/project-categories.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { TodosModule } from './todos/todos.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
     ProjectsModule,
     ProjectCategoriesModule,
     PaymentMethodsModule,
+    TodosModule,
   ],
   providers: [
     {

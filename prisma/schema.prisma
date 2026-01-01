@@ -26,6 +26,8 @@ model User {
   categories      ProjectCategory[]
   paymentMethods  PaymentMethod[]
   projectPageSettings ProjectPageSettings?
+  todoWeeks       TodoWeek[]
+  todoPageSettings TodoPageSettings?
 
   @@map("users")
 }
@@ -216,4 +218,57 @@ model ProjectPageSettings {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("project_page_settings")
+}
+
+// ==================== TODO LIST ====================
+model TodoWeek {
+  id        String   @id @default(uuid())
+  weekStart DateTime @map("week_start") // Start of the week (Monday)
+  weekEnd   DateTime @map("week_end")   // End of the week (Sunday)
+  
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  todos     Todo[]
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, weekStart])
+  @@index([userId])
+  @@map("todo_weeks")
+}
+
+model Todo {
+  id          String   @id @default(uuid())
+  title       String
+  isCompleted Boolean  @default(false) @map("is_completed")
+  day         String   // Mon, Tue, Wed, Thu, Fri, Sat, Sun
+  order       Int      @default(0) // Position within the day
+  
+  weekId      String   @map("week_id")
+  week        TodoWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([weekId])
+  @@index([weekId, day, order])
+  @@map("todos")
+}
+
+model TodoPageSettings {
+  id          String   @id @default(uuid())
+  cover       String?  // Cloudinary URL for cover image
+  icon        String?  // Emoji or icon
+  title       String   @default("Weekly To-do List")
+  description String?
+  
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("todo_page_settings")
 }

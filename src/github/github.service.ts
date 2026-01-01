@@ -188,4 +188,50 @@ export class GithubService {
       orderBy: { recordedAt: 'asc' },
     });
   }
+
+  async getLanguageStats(userId: string) {
+    const repos = await this.prisma.gitHubRepo.findMany({
+      where: { userId },
+      select: { language: true },
+    });
+
+    const languageCount = new Map<string, number>();
+
+    repos.forEach((repo) => {
+      const lang = repo.language || 'Unknown';
+      languageCount.set(lang, (languageCount.get(lang) || 0) + 1);
+    });
+
+    return Array.from(languageCount.entries())
+      .map(([language, count]) => ({ language, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  async getOverallStats(userId: string) {
+    const repos = await this.prisma.gitHubRepo.findMany({
+      where: { userId },
+    });
+
+    const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0);
+    const totalForks = repos.reduce((sum, repo) => sum + repo.forks, 0);
+    const totalRepos = repos.length;
+
+    const languages = new Map<string, number>();
+    repos.forEach((repo) => {
+      const lang = repo.language || 'Unknown';
+      languages.set(lang, (languages.get(lang) || 0) + 1);
+    });
+
+    const topLanguages = Array.from(languages.entries())
+      .map(([language, count]) => ({ language, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      totalRepos,
+      totalStars,
+      totalForks,
+      topLanguages,
+    };
+  }
 }

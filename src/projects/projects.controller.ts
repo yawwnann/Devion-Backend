@@ -10,8 +10,10 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import type { User } from '@prisma/client';
 import { ProjectsService } from './projects.service';
 import { ProjectSettingsService } from './project-settings.service';
@@ -69,6 +71,51 @@ export class ProjectsController {
   @Get('stats')
   getStats(@CurrentUser() user: User) {
     return this.projectsService.getStats(user.id);
+  }
+
+  // ========== CSV Export/Import ==========
+  @Get('export/csv')
+  async exportCsv(@CurrentUser() user: User, @Res() res: Response) {
+    const csv = await this.projectsService.exportToCsv(user.id);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=projects-${Date.now()}.csv`,
+    );
+    res.send(csv);
+  }
+
+  @Post('import/csv')
+  @UseInterceptors(FileInterceptor('file'))
+  async importCsv(
+    @CurrentUser() user: User,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.projectsService.importFromCsv(user.id, file);
+  }
+
+  // ========== XLSX Export/Import ==========
+  @Get('export/xlsx')
+  async exportXlsx(@CurrentUser() user: User, @Res() res: Response) {
+    const buffer = await this.projectsService.exportToXlsx(user.id);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=projects-${Date.now()}.xlsx`,
+    );
+    res.send(buffer);
+  }
+
+  @Post('import/xlsx')
+  @UseInterceptors(FileInterceptor('file'))
+  async importXlsx(
+    @CurrentUser() user: User,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.projectsService.importFromXlsx(user.id, file);
   }
 
   @Get(':id')

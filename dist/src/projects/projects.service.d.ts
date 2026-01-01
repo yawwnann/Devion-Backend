@@ -11,10 +11,10 @@ export declare class ProjectsService {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     findAll(userId: string): Promise<({
         category: {
@@ -41,10 +41,10 @@ export declare class ProjectsService {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     })[]>;
     findOne(id: string, userId: string): Promise<{
         id: string;
@@ -54,10 +54,10 @@ export declare class ProjectsService {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     update(id: string, userId: string, dto: UpdateProjectDto): Promise<{
         id: string;
@@ -67,10 +67,10 @@ export declare class ProjectsService {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
@@ -80,15 +80,26 @@ export declare class ProjectsService {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     getStats(userId: string): Promise<{
         total: number;
         todo: number;
         inProgress: number;
         done: number;
+    }>;
+    exportToCsv(userId: string): Promise<string>;
+    importFromCsv(userId: string, file: Express.Multer.File): Promise<{
+        imported: number;
+        errors: string[];
+    }>;
+    private parseCsvLine;
+    exportToXlsx(userId: string): Promise<Buffer>;
+    importFromXlsx(userId: string, file: Express.Multer.File): Promise<{
+        imported: number;
+        errors: string[];
     }>;
 }

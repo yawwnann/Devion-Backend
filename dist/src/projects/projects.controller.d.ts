@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import type { User } from '@prisma/client';
 import { ProjectsService } from './projects.service';
 import { ProjectSettingsService } from './project-settings.service';
@@ -58,10 +59,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     findAll(user: User): Promise<({
         category: {
@@ -88,16 +89,26 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     })[]>;
     getStats(user: User): Promise<{
         total: number;
         todo: number;
         inProgress: number;
         done: number;
+    }>;
+    exportCsv(user: User, res: Response): Promise<void>;
+    importCsv(user: User, file: Express.Multer.File): Promise<{
+        imported: number;
+        errors: string[];
+    }>;
+    exportXlsx(user: User, res: Response): Promise<void>;
+    importXlsx(user: User, file: Express.Multer.File): Promise<{
+        imported: number;
+        errors: string[];
     }>;
     findOne(id: string, user: User): Promise<{
         id: string;
@@ -107,10 +118,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     update(id: string, user: User, dto: UpdateProjectDto): Promise<{
         id: string;
@@ -120,10 +131,10 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
@@ -133,9 +144,9 @@ export declare class ProjectsController {
         userId: string;
         order: string | null;
         status: string;
-        information: string | null;
-        orderNum: number;
         categoryId: string | null;
         paymentId: string | null;
+        information: string | null;
+        orderNum: number;
     }>;
 }

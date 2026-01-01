@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectsController = void 0;
 const common_1 = require("@nestjs/common");
@@ -49,6 +48,24 @@ let ProjectsController = class ProjectsController {
     getStats(user) {
         return this.projectsService.getStats(user.id);
     }
+    async exportCsv(user, res) {
+        const csv = await this.projectsService.exportToCsv(user.id);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=projects-${Date.now()}.csv`);
+        res.send(csv);
+    }
+    async importCsv(user, file) {
+        return this.projectsService.importFromCsv(user.id, file);
+    }
+    async exportXlsx(user, res) {
+        const buffer = await this.projectsService.exportToXlsx(user.id);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=projects-${Date.now()}.xlsx`);
+        res.send(buffer);
+    }
+    async importXlsx(user, file) {
+        return this.projectsService.importFromXlsx(user.id, file);
+    }
     findOne(id, user) {
         return this.projectsService.findOne(id, user.id);
     }
@@ -81,7 +98,7 @@ __decorate([
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_b = typeof Express !== "undefined" && (_a = Express.Multer) !== void 0 && _a.File) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], ProjectsController.prototype, "uploadCover", null);
 __decorate([
@@ -113,6 +130,40 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ProjectsController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Get)('export/csv'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "exportCsv", null);
+__decorate([
+    (0, common_1.Post)('import/csv'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "importCsv", null);
+__decorate([
+    (0, common_1.Get)('export/xlsx'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "exportXlsx", null);
+__decorate([
+    (0, common_1.Post)('import/xlsx'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ProjectsController.prototype, "importXlsx", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),

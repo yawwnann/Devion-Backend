@@ -12,10 +12,10 @@ export declare class PagesController {
             title: string;
             icon: string | null;
             cover: string | null;
+            parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
             userId: string;
-            parentId: string | null;
         }[];
     } & {
         id: string;
@@ -24,10 +24,10 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     }>;
     findAll(user: User): Promise<({
         subpages: {
@@ -37,10 +37,10 @@ export declare class PagesController {
             title: string;
             icon: string | null;
             cover: string | null;
+            parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
             userId: string;
-            parentId: string | null;
         }[];
     } & {
         id: string;
@@ -49,10 +49,10 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     })[]>;
     findFavorites(user: User): Promise<{
         id: string;
@@ -61,10 +61,10 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     }[]>;
     findArchived(user: User): Promise<{
         id: string;
@@ -73,10 +73,10 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     }[]>;
     findOne(id: string, user: User): Promise<{
         subpages: {
@@ -86,10 +86,10 @@ export declare class PagesController {
             title: string;
             icon: string | null;
             cover: string | null;
+            parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
             userId: string;
-            parentId: string | null;
         }[];
         blocks: ({
             children: {
@@ -119,10 +119,10 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     }>;
     update(id: string, user: User, dto: UpdatePageDto): Promise<{
         id: string;
@@ -131,10 +131,10 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
@@ -143,9 +143,9 @@ export declare class PagesController {
         title: string;
         icon: string | null;
         cover: string | null;
+        parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
         userId: string;
-        parentId: string | null;
     }>;
 }
