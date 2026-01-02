@@ -16,9 +16,12 @@ export declare class JwtStrategy extends JwtStrategy_base {
         email: string;
         googleId: string | null;
         name: string | null;
+        bio: string | null;
         avatar: string | null;
+        cover: string | null;
         password: string | null;
         githubUsername: string | null;
+        githubAccessToken: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

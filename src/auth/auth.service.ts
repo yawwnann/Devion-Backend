@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { v2 as cloudinary } from 'cloudinary';
 import { PrismaService } from '../prisma';
 
 interface GoogleUser {
@@ -19,7 +20,13 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  }
 
   async register(email: string, password: string, name: string) {
     // Check if user exists
@@ -98,5 +105,113 @@ export class AuthService {
     return {
       accessToken: this.jwtService.sign(payload),
     };
+  }
+
+  async updateProfile(
+    userId: string,
+    data: {
+      name?: string;
+      bio?: string;
+      avatar?: string;
+      cover?: string;
+      githubUsername?: string;
+    },
+  ) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+
+    const { password, googleId, ...safeUser } = user as any;
+    return safeUser;
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.password) {
+      throw new UnauthorizedException(
+        'Password change not available for OAuth users',
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password changed successfully' };
+  }
+
+  async getStatistics(userId: string) {
+    const [projectsCount, todosCount, pagesCount] = await Promise.all([
+      this.prisma.project.count({ where: { userId } }),
+      this.prisma.todo.count({
+        where: { week: { userId } },
+      }),
+      this.prisma.page.count({ where: { userId } }),
+    ]);
+
+    return {
+      projects: projectsCount,
+      todos: todosCount,
+      pages: pagesCount,
+    };
+  }
+
+  async uploadImage(
+    userId: string,
+    file: Express.Multer.File,
+    type: 'avatar' | 'cover',
+  ) {
+    const result = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: `devion/profile/${type}`,
+            transformation: [
+              {
+                width: type === 'avatar' ? 500 : 1200,
+                height: type === 'avatar' ? 500 : 400,
+                crop: 'fill',
+              },
+            ],
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        )
+        .end(file.buffer);
+    });
+
+    const updateData =
+      type === 'avatar'
+        ? { avatar: result.secure_url }
+        : { cover: result.secure_url };
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    const { password, googleId, ...safeUser } = user as any;
+    return safeUser;
   }
 }

@@ -4,12 +4,12 @@ export declare class ProjectSettingsService {
     constructor(prisma: PrismaService);
     getSettings(userId: string): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     updateSettings(userId: string, dto: {
@@ -18,32 +18,32 @@ export declare class ProjectSettingsService {
         icon?: string;
     }): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     uploadCover(userId: string, file: Express.Multer.File): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     removeCover(userId: string): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
 }

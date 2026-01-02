@@ -6,89 +6,89 @@ export declare class PagesService {
     create(userId: string, dto: CreatePageDto): Promise<{
         subpages: {
             id: string;
+            cover: string | null;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             icon: string | null;
-            cover: string | null;
             parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
-            userId: string;
         }[];
     } & {
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     findAll(userId: string): Promise<({
         subpages: {
             id: string;
+            cover: string | null;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             icon: string | null;
-            cover: string | null;
             parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
-            userId: string;
         }[];
     } & {
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     })[]>;
     findFavorites(userId: string): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }[]>;
     findArchived(userId: string): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }[]>;
     findOne(id: string, userId: string): Promise<{
         subpages: {
             id: string;
+            cover: string | null;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             icon: string | null;
-            cover: string | null;
             parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
-            userId: string;
         }[];
         blocks: ({
             children: {
@@ -113,39 +113,39 @@ export declare class PagesService {
         })[];
     } & {
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     update(id: string, userId: string, dto: UpdatePageDto): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     private verifyOwnership;
 }

@@ -21,14 +21,33 @@ export declare class AuthService {
         email: string;
         googleId: string | null;
         name: string | null;
+        bio: string | null;
         avatar: string | null;
+        cover: string | null;
         password: string | null;
         githubUsername: string | null;
+        githubAccessToken: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
     generateTokens(userId: string, email: string): {
         accessToken: string;
     };
+    updateProfile(userId: string, data: {
+        name?: string;
+        bio?: string;
+        avatar?: string;
+        cover?: string;
+        githubUsername?: string;
+    }): Promise<any>;
+    changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{
+        message: string;
+    }>;
+    getStatistics(userId: string): Promise<{
+        projects: number;
+        todos: number;
+        pages: number;
+    }>;
+    uploadImage(userId: string, file: Express.Multer.File, type: 'avatar' | 'cover'): Promise<any>;
 }
 export {};

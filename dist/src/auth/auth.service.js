@@ -46,6 +46,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
+const cloudinary_1 = require("cloudinary");
 const prisma_1 = require("../prisma");
 let AuthService = class AuthService {
     prisma;
@@ -53,6 +54,11 @@ let AuthService = class AuthService {
     constructor(prisma, jwtService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
+        cloudinary_1.v2.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
     }
     async register(email, password, name) {
         const existingUser = await this.prisma.user.findUnique({
@@ -112,6 +118,76 @@ let AuthService = class AuthService {
         return {
             accessToken: this.jwtService.sign(payload),
         };
+    }
+    async updateProfile(userId, data) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data,
+        });
+        const { password, googleId, ...safeUser } = user;
+        return safeUser;
+    }
+    async changePassword(userId, currentPassword, newPassword) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user || !user.password) {
+            throw new common_1.UnauthorizedException('Password change not available for OAuth users');
+        }
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new common_1.UnauthorizedException('Current password is incorrect');
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+        return { message: 'Password changed successfully' };
+    }
+    async getStatistics(userId) {
+        const [projectsCount, todosCount, pagesCount] = await Promise.all([
+            this.prisma.project.count({ where: { userId } }),
+            this.prisma.todo.count({
+                where: { week: { userId } },
+            }),
+            this.prisma.page.count({ where: { userId } }),
+        ]);
+        return {
+            projects: projectsCount,
+            todos: todosCount,
+            pages: pagesCount,
+        };
+    }
+    async uploadImage(userId, file, type) {
+        const result = await new Promise((resolve, reject) => {
+            cloudinary_1.v2.uploader
+                .upload_stream({
+                folder: `devion/profile/${type}`,
+                transformation: [
+                    {
+                        width: type === 'avatar' ? 500 : 1200,
+                        height: type === 'avatar' ? 500 : 400,
+                        crop: 'fill',
+                    },
+                ],
+            }, (error, result) => {
+                if (error)
+                    reject(error);
+                else
+                    resolve(result);
+            })
+                .end(file.buffer);
+        });
+        const updateData = type === 'avatar'
+            ? { avatar: result.secure_url }
+            : { cover: result.secure_url };
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: updateData,
+        });
+        const { password, googleId, ...safeUser } = user;
+        return safeUser;
     }
 };
 exports.AuthService = AuthService;

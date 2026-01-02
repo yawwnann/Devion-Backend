@@ -7,89 +7,89 @@ export declare class PagesController {
     create(user: User, dto: CreatePageDto): Promise<{
         subpages: {
             id: string;
+            cover: string | null;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             icon: string | null;
-            cover: string | null;
             parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
-            userId: string;
         }[];
     } & {
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     findAll(user: User): Promise<({
         subpages: {
             id: string;
+            cover: string | null;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             icon: string | null;
-            cover: string | null;
             parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
-            userId: string;
         }[];
     } & {
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     })[]>;
     findFavorites(user: User): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }[]>;
     findArchived(user: User): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }[]>;
     findOne(id: string, user: User): Promise<{
         subpages: {
             id: string;
+            cover: string | null;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             icon: string | null;
-            cover: string | null;
             parentId: string | null;
             isArchived: boolean;
             isFavorite: boolean;
-            userId: string;
         }[];
         blocks: ({
             children: {
@@ -114,38 +114,38 @@ export declare class PagesController {
         })[];
     } & {
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     update(id: string, user: User, dto: UpdatePageDto): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
         parentId: string | null;
         isArchived: boolean;
         isFavorite: boolean;
-        userId: string;
     }>;
 }

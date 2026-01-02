@@ -11,10 +11,13 @@ model User {
   id            String   @id @default(uuid())
   email         String   @unique
   name          String?
+  bio           String?  // User bio/description
   avatar        String?  // Cloudinary URL
+  cover         String?  // Profile cover image
   password      String?  // hashed password (null for OAuth users)
   googleId      String?  @unique @map("google_id") // nullable for email/password users
   githubUsername String? @map("github_username")
+  githubAccessToken String? @map("github_access_token") // GitHub personal access token for API
   
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
@@ -184,6 +187,11 @@ model Project {
   information String?          // Additional notes
   orderNum    Int              @default(autoincrement()) @map("order_num")
   
+  // GitHub Integration
+  githubRepo  String?          @map("github_repo") // owner/repo format
+  githubUrl   String?          @map("github_url")  // Full GitHub URL
+  lastSyncedAt DateTime?       @map("last_synced_at")
+  
   categoryId  String?          @map("category_id")
   category    ProjectCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   
@@ -246,6 +254,13 @@ model Todo {
   day         String   // Mon, Tue, Wed, Thu, Fri, Sat, Sun
   order       Int      @default(0) // Position within the day
   
+  // GitHub Integration
+  githubIssueNumber Int?     @map("github_issue_number")
+  githubIssueUrl    String?  @map("github_issue_url")
+  githubRepoName    String?  @map("github_repo_name") // owner/repo
+  githubLabels      String?  @map("github_labels") // JSON string
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  
   weekId      String   @map("week_id")
   week        TodoWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
   
@@ -254,6 +269,7 @@ model Todo {
 
   @@index([weekId])
   @@index([weekId, day, order])
+  @@index([githubIssueNumber, githubRepoName])
   @@map("todos")
 }
 

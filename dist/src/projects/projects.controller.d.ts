@@ -9,12 +9,12 @@ export declare class ProjectsController {
     constructor(projectsService: ProjectsService, settingsService: ProjectSettingsService);
     getSettings(user: User): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     updateSettings(user: User, dto: {
@@ -23,32 +23,32 @@ export declare class ProjectsController {
         icon?: string;
     }): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     uploadCover(user: User, file: Express.Multer.File): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     removeCover(user: User): Promise<{
         id: string;
+        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         icon: string | null;
-        cover: string | null;
-        userId: string;
         description: string | null;
     }>;
     create(user: User, dto: CreateProjectDto): Promise<{
@@ -58,11 +58,14 @@ export declare class ProjectsController {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     findAll(user: User): Promise<({
         category: {
@@ -88,11 +91,14 @@ export declare class ProjectsController {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     })[]>;
     getStats(user: User): Promise<{
         total: number;
@@ -117,11 +123,14 @@ export declare class ProjectsController {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     update(id: string, user: User, dto: UpdateProjectDto): Promise<{
         id: string;
@@ -130,11 +139,14 @@ export declare class ProjectsController {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
@@ -143,10 +155,13 @@ export declare class ProjectsController {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
 }

@@ -15,4 +15,6 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./set-github-username.dto"), exports);
+__exportStar(require("./sync-issues.dto"), exports);
+__exportStar(require("./set-github-token.dto"), exports);
 //# sourceMappingURL=index.js.map

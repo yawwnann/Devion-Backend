@@ -10,11 +10,14 @@ export declare class ProjectsService {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     findAll(userId: string): Promise<({
         category: {
@@ -40,11 +43,14 @@ export declare class ProjectsService {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     })[]>;
     findOne(id: string, userId: string): Promise<{
         id: string;
@@ -53,11 +59,14 @@ export declare class ProjectsService {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     update(id: string, userId: string, dto: UpdateProjectDto): Promise<{
         id: string;
@@ -66,11 +75,14 @@ export declare class ProjectsService {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
@@ -79,11 +91,14 @@ export declare class ProjectsService {
         updatedAt: Date;
         userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
-        categoryId: string | null;
-        paymentId: string | null;
         information: string | null;
         orderNum: number;
+        githubRepo: string | null;
+        githubUrl: string | null;
+        categoryId: string | null;
+        paymentId: string | null;
     }>;
     getStats(userId: string): Promise<{
         total: number;
