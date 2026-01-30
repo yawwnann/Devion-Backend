@@ -13,6 +13,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { ProjectCategoriesModule } from './project-categories/project-categories.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { TodosModule } from './todos/todos.module';
+import { CalendarModule } from './calendar';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { TodosModule } from './todos/todos.module';
     ProjectCategoriesModule,
     PaymentMethodsModule,
     TodosModule,
+    CalendarModule,
   ],
   providers: [
     {

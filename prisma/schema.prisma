@@ -31,6 +31,7 @@ model User {
   projectPageSettings ProjectPageSettings?
   todoWeeks       TodoWeek[]
   todoPageSettings TodoPageSettings?
+  calendarEvents  CalendarEvent[]
 
   @@map("users")
 }
@@ -187,6 +188,10 @@ model Project {
   information String?          // Additional notes
   orderNum    Int              @default(autoincrement()) @map("order_num")
   
+  // Dates
+  dueDate     DateTime?        @map("due_date")
+  startDate   DateTime?        @map("start_date")
+  
   // GitHub Integration
   githubRepo  String?          @map("github_repo") // owner/repo format
   githubUrl   String?          @map("github_url")  // Full GitHub URL
@@ -200,6 +205,8 @@ model Project {
   
   userId      String           @map("user_id")
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  calendarEvents CalendarEvent[]
   
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
@@ -253,6 +260,9 @@ model Todo {
   isCompleted Boolean  @default(false) @map("is_completed")
   day         String   // Mon, Tue, Wed, Thu, Fri, Sat, Sun
   order       Int      @default(0) // Position within the day
+  priority    String   @default("MEDIUM") // HIGH, MEDIUM, LOW
+  status      String   @default("TODO") // TODO, SCHEDULED, IN_PROGRESS, DONE
+  dueDate     DateTime? @map("due_date") // Optional due date for calendar integration
   
   // GitHub Integration
   githubIssueNumber Int?     @map("github_issue_number")
@@ -264,6 +274,9 @@ model Todo {
   weekId      String   @map("week_id")
   week        TodoWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
   
+  calendarEvents CalendarEvent[]
+  commits        GitHubCommit[]
+  
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -271,6 +284,31 @@ model Todo {
   @@index([weekId, day, order])
   @@index([githubIssueNumber, githubRepoName])
   @@map("todos")
+}
+
+// GitHub Commit tracking
+model GitHubCommit {
+  id           String   @id @default(uuid())
+  sha          String   @unique // Git commit SHA
+  message      String   // Commit message
+  author       String   // Author name
+  authorEmail  String?  @map("author_email")
+  authorAvatar String?  @map("author_avatar") // GitHub avatar URL
+  url          String   // GitHub commit URL
+  htmlUrl      String   @map("html_url") // Browser URL
+  additions    Int      @default(0) // Lines added
+  deletions    Int      @default(0) // Lines deleted
+  committedAt  DateTime @map("committed_at") // When commit was made
+  
+  todoId       String   @map("todo_id")
+  todo         Todo     @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([todoId])
+  @@index([todoId, committedAt])
+  @@map("github_commits")
 }
 
 model TodoPageSettings {
@@ -287,4 +325,42 @@ model TodoPageSettings {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("todo_page_settings")
+}
+
+// ==================== CALENDAR ====================
+model CalendarEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  allDay      Boolean  @default(false) @map("all_day")
+  color       String   @default("blue") // Event color
+  
+  // Event type and source
+  eventType   String   @map("event_type") // project, todo, github_issue, custom
+  
+  // Relations to source entities
+  projectId   String?  @map("project_id")
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  todoId      String?  @map("todo_id")
+  todo        Todo?    @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  
+  // GitHub Issue reference (no direct relation)
+  githubIssueNumber Int?    @map("github_issue_number")
+  githubRepoName    String? @map("github_repo_name")
+  
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([userId, startDate])
+  @@index([projectId])
+  @@index([todoId])
+  @@index([eventType])
+  @@map("calendar_events")
 }

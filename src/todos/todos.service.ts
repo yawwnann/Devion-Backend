@@ -42,7 +42,10 @@ export class TodosService {
   }
 
   // Create new todo
-  async createTodo(userId: string, data: { title: string; day: string }) {
+  async createTodo(
+    userId: string,
+    data: { title: string; day: string; dueDate?: string; priority?: string; status?: string },
+  ) {
     const week = await this.getCurrentWeek(userId);
 
     const maxOrder = await this.prisma.todo.findFirst({
@@ -51,12 +54,20 @@ export class TodosService {
       select: { order: true },
     });
 
+    const status = data.status || 'TODO';
+    const isCompleted = status === 'DONE';
+
     return this.prisma.todo.create({
       data: {
         title: data.title,
         day: data.day,
         weekId: week.id,
         order: (maxOrder?.order ?? -1) + 1,
+        ...(data.dueDate && { dueDate: new Date(data.dueDate) }),
+        priority: data.priority || 'MEDIUM',
+        // @ts-ignore
+        status,
+        isCompleted,
       },
     });
   }
@@ -65,7 +76,15 @@ export class TodosService {
   async updateTodo(
     userId: string,
     todoId: string,
-    data: { title?: string; isCompleted?: boolean },
+    data: { 
+      title?: string; 
+      isCompleted?: boolean; 
+      dueDate?: string; 
+      priority?: string; 
+      status?: string; 
+      githubIssueNumber?: number; 
+      githubRepoName?: string; 
+    },
   ) {
     // Verify ownership
     const todo = await this.prisma.todo.findFirst({
@@ -73,15 +92,41 @@ export class TodosService {
         id: todoId,
         week: { userId },
       },
+      // @ts-ignore
+      select: { id: true, status: true, isCompleted: true },
     });
 
     if (!todo) {
       throw new Error('Todo not found');
     }
 
+    const updates: any = { ...data };
+    
+    // Sync status and isCompleted
+    if (data.status && data.status === 'DONE') {
+      updates.isCompleted = true;
+    } else if (data.status && data.status !== 'DONE') {
+      updates.isCompleted = false;
+    }
+
+    // Bi-directional sync: if isCompleted is toggled, update status
+    if (data.isCompleted !== undefined) {
+      if (data.isCompleted) {
+        updates.status = 'DONE';
+      } else if (!data.status || data.status === 'DONE') {
+        // Only revert to TODO if status wasn't explicitly set to something else
+        // (This logic might need refinement depending on desired behavior, but simple for now)
+        updates.status = 'TODO';
+      }
+    }
+
+    if (data.dueDate) {
+      updates.dueDate = new Date(data.dueDate);
+    }
+
     return this.prisma.todo.update({
       where: { id: todoId },
-      data,
+      data: updates,
     });
   }
 
@@ -103,20 +148,18 @@ export class TodosService {
     });
   }
 
-  // Reorder todos within a day
+  // Reorder todos (Generic)
   async reorderTodos(
     userId: string,
-    day: string,
     todoIds: string[],
-  ): Promise<void> {
+  ): Promise<{ success: boolean }> {
     // Verify all todos belong to user
-    const week = await this.getCurrentWeek(userId);
     const todos = await this.prisma.todo.findMany({
       where: {
-        weekId: week.id,
-        day,
+        week: { userId },
         id: { in: todoIds },
       },
+      select: { id: true },
     });
 
     if (todos.length !== todoIds.length) {
@@ -132,6 +175,8 @@ export class TodosService {
         }),
       ),
     );
+
+    return { success: true };
   }
 
   // Create new week (for next week)
@@ -140,6 +185,22 @@ export class TodosService {
     const nextWeekStart = new Date(currentWeek.weekStart);
     nextWeekStart.setDate(nextWeekStart.getDate() + 7);
     const nextWeekEnd = this.getWeekEnd(nextWeekStart);
+
+    const existingWeek = await this.prisma.todoWeek.findUnique({
+      where: {
+        userId_weekStart: {
+          userId,
+          weekStart: nextWeekStart,
+        },
+      },
+      include: {
+        todos: true,
+      },
+    });
+
+    if (existingWeek) {
+      return existingWeek;
+    }
 
     return this.prisma.todoWeek.create({
       data: {

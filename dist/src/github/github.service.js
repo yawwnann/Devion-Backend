@@ -115,23 +115,34 @@ let GithubService = GithubService_1 = class GithubService {
     async syncRepos(userId) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
-            select: { githubUsername: true },
+            select: { githubUsername: true, githubAccessToken: true },
         });
         if (!user?.githubUsername) {
             throw new common_1.NotFoundException('GitHub username not set');
         }
-        const response = await fetch(`${this.GITHUB_API}/users/${user.githubUsername}/repos?per_page=100&sort=updated`, { headers: { 'User-Agent': 'Devion-App' } });
+        const headers = {
+            'User-Agent': 'Devion-App',
+            Accept: 'application/vnd.github.v3+json',
+        };
+        let url;
+        if (user.githubAccessToken) {
+            headers.Authorization = `Bearer ${user.githubAccessToken}`;
+            url = `${this.GITHUB_API}/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator`;
+        }
+        else {
+            url = `${this.GITHUB_API}/users/${user.githubUsername}/repos?per_page=100&sort=updated`;
+        }
+        const response = await fetch(url, { headers });
         if (!response.ok) {
             throw new common_1.BadRequestException('Failed to fetch GitHub repos');
         }
         const repos = await response.json();
         const now = new Date();
-        const publicRepos = repos.filter((r) => !r.private);
         await this.prisma.$transaction(async (tx) => {
             await tx.gitHubRepo.deleteMany({
                 where: { userId },
             });
-            for (const repo of publicRepos) {
+            for (const repo of repos) {
                 const dbRepo = await tx.gitHubRepo.create({
                     data: {
                         userId,
@@ -144,6 +155,7 @@ let GithubService = GithubService_1 = class GithubService {
                         stars: repo.stargazers_count,
                         forks: repo.forks_count,
                         openIssues: repo.open_issues_count,
+                        isPrivate: repo.private,
                         lastSyncedAt: now,
                     },
                 });
@@ -161,7 +173,7 @@ let GithubService = GithubService_1 = class GithubService {
             maxWait: 15000,
             timeout: 30000,
         });
-        return { synced: publicRepos.length };
+        return { synced: repos.length };
     }
     async getRepoStats(userId, repoId, days = 30) {
         const repo = await this.prisma.gitHubRepo.findUnique({
@@ -493,6 +505,208 @@ let GithubService = GithubService_1 = class GithubService {
                 lastSyncedAt: new Date(),
             },
         });
+    }
+    async fetchCommitsForIssue(userId, repoOwner, repoName, issueNumber) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { githubAccessToken: true },
+        });
+        if (!user?.githubAccessToken) {
+            throw new common_1.BadRequestException('GitHub access token required for commit tracking');
+        }
+        const searchQuery = `repo:${repoOwner}/${repoName} ${issueNumber}`;
+        try {
+            const response = await axios_1.default.get(`${this.GITHUB_API}/search/commits?q=${encodeURIComponent(searchQuery)}&sort=committer-date&order=desc&per_page=50`, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.cloak-preview+json',
+                },
+            });
+            return response.data.items.map((commit) => ({
+                sha: commit.sha,
+                message: commit.commit.message,
+                author: commit.commit.author?.name || 'Unknown',
+                authorEmail: commit.commit.author?.email,
+                authorAvatar: commit.author?.avatar_url,
+                url: commit.url,
+                htmlUrl: commit.html_url,
+                committedAt: new Date(commit.commit.author?.date || new Date()),
+            }));
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch commits: ${error.message}`);
+            return [];
+        }
+    }
+    async fetchCommitDetails(userId, repoOwner, repoName, sha) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { githubAccessToken: true },
+        });
+        if (!user?.githubAccessToken) {
+            throw new common_1.BadRequestException('GitHub access token required');
+        }
+        const response = await axios_1.default.get(`${this.GITHUB_API}/repos/${repoOwner}/${repoName}/commits/${sha}`, {
+            headers: {
+                Authorization: `Bearer ${user.githubAccessToken}`,
+                Accept: 'application/vnd.github.v3+json',
+            },
+        });
+        return {
+            sha: response.data.sha,
+            message: response.data.commit.message,
+            author: response.data.commit.author?.name || 'Unknown',
+            authorEmail: response.data.commit.author?.email,
+            authorAvatar: response.data.author?.avatar_url,
+            url: response.data.url,
+            htmlUrl: response.data.html_url,
+            additions: response.data.stats?.additions || 0,
+            deletions: response.data.stats?.deletions || 0,
+            committedAt: new Date(response.data.commit.author?.date || new Date()),
+        };
+    }
+    async syncCommitsForTodo(userId, todoId) {
+        const todo = await this.prisma.todo.findFirst({
+            where: { id: todoId, week: { userId } },
+            select: {
+                id: true,
+                githubIssueNumber: true,
+                githubRepoName: true,
+            },
+        });
+        if (!todo || !todo.githubIssueNumber || !todo.githubRepoName) {
+            throw new common_1.BadRequestException('Todo not linked to GitHub issue');
+        }
+        const [owner, repo] = todo.githubRepoName.split('/');
+        if (!owner || !repo) {
+            throw new common_1.BadRequestException('Invalid repository name format. Expected: owner/repo');
+        }
+        const commits = await this.fetchCommitsForIssue(userId, owner, repo, todo.githubIssueNumber);
+        const detailedCommits = await Promise.all(commits.map((commit) => this.fetchCommitDetails(userId, owner, repo, commit.sha)));
+        for (const commitData of detailedCommits) {
+            await this.prisma.gitHubCommit.upsert({
+                where: { sha: commitData.sha },
+                create: {
+                    ...commitData,
+                    todoId: todo.id,
+                },
+                update: {
+                    message: commitData.message,
+                    author: commitData.author,
+                    authorEmail: commitData.authorEmail,
+                    authorAvatar: commitData.authorAvatar,
+                    additions: commitData.additions,
+                    deletions: commitData.deletions,
+                },
+            });
+        }
+        await this.prisma.todo.update({
+            where: { id: todoId },
+            data: { lastSyncedAt: new Date() },
+        });
+        return {
+            synced: detailedCommits.length,
+            commits: detailedCommits,
+        };
+    }
+    async getCommitsForTodo(userId, todoId) {
+        const todo = await this.prisma.todo.findFirst({
+            where: { id: todoId, week: { userId } },
+            select: { id: true },
+        });
+        if (!todo) {
+            throw new common_1.NotFoundException('Todo not found');
+        }
+        return this.prisma.gitHubCommit.findMany({
+            where: { todoId: todo.id },
+            orderBy: { committedAt: 'desc' },
+        });
+    }
+    async createIssue(userId, repoOwner, repoName, issueData) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user?.githubAccessToken) {
+            throw new common_1.UnauthorizedException('GitHub token not set');
+        }
+        try {
+            const response = await axios_1.default.post(`${this.GITHUB_API}/repos/${repoOwner}/${repoName}/issues`, {
+                title: issueData.title,
+                body: issueData.body || '',
+                labels: issueData.labels || [],
+                assignees: issueData.assignees || [],
+            }, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            return {
+                number: response.data.number,
+                url: response.data.html_url,
+                title: response.data.title,
+                state: response.data.state,
+                createdAt: response.data.created_at,
+            };
+        }
+        catch (error) {
+            console.error('Failed to create GitHub issue:', error);
+            throw new common_1.BadRequestException('Failed to create GitHub issue');
+        }
+    }
+    async getRecentCommits(userId, limit = 20) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user?.githubUsername || !user?.githubAccessToken) {
+            throw new common_1.UnauthorizedException('GitHub not configured');
+        }
+        try {
+            const reposResponse = await axios_1.default.get(`${this.GITHUB_API}/users/${user.githubUsername}/repos`, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+                params: {
+                    sort: 'updated',
+                    per_page: 10,
+                },
+            });
+            const commits = [];
+            for (const repo of reposResponse.data.slice(0, 10)) {
+                try {
+                    const commitsResponse = await axios_1.default.get(`${this.GITHUB_API}/repos/${user.githubUsername}/${repo.name}/commits`, {
+                        headers: {
+                            Authorization: `Bearer ${user.githubAccessToken}`,
+                            Accept: 'application/vnd.github.v3+json',
+                        },
+                        params: {
+                            per_page: 10,
+                        },
+                    });
+                    commits.push(...commitsResponse.data.map((commit) => ({
+                        sha: commit.sha,
+                        message: commit.commit.message,
+                        author: commit.commit.author.name,
+                        authorAvatar: commit.author?.avatar_url,
+                        date: commit.commit.author.date,
+                        url: commit.html_url,
+                        repo: repo.name,
+                        repoUrl: repo.html_url,
+                    })));
+                }
+                catch (error) {
+                    console.error(`Failed to fetch commits for ${repo.name}:`, error);
+                }
+            }
+            return commits
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .slice(0, limit);
+        }
+        catch (error) {
+            console.error('Failed to fetch recent commits:', error);
+            throw new common_1.BadRequestException('Failed to fetch recent commits');
+        }
     }
     getWeekStart(date) {
         const d = new Date(date);

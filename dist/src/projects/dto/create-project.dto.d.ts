@@ -5,4 +5,6 @@ export declare class CreateProjectDto {
     categoryId?: string;
     paymentId?: string;
     information?: string;
+    startDate?: string;
+    dueDate?: string;
 }

@@ -18,6 +18,8 @@ class CreateProjectDto {
     categoryId;
     paymentId;
     information;
+    startDate;
+    dueDate;
 }
 exports.CreateProjectDto = CreateProjectDto;
 __decorate([
@@ -49,4 +51,14 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateProjectDto.prototype, "information", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateProjectDto.prototype, "startDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateProjectDto.prototype, "dueDate", void 0);
 //# sourceMappingURL=create-project.dto.js.map

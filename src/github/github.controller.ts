@@ -94,6 +94,33 @@ export class GithubController {
     return this.githubService.syncSingleTodo(user.id, dto.todoId);
   }
 
+  @Post('repos/:owner/:repo/issues')
+  createIssueInRepo(
+    @CurrentUser() user: User,
+    @Param('owner') owner: string,
+    @Param('repo') repo: string,
+    @Body()
+    body: {
+      title: string;
+      body?: string;
+      labels?: string[];
+      assignees?: string[];
+    },
+  ) {
+    return this.githubService.createIssue(user.id, owner, repo, body);
+  }
+
+  @Get('recent-commits')
+  getRecentCommits(
+    @CurrentUser() user: User,
+    @Query('limit') limit?: string,
+  ) {
+    return this.githubService.getRecentCommits(
+      user.id,
+      limit ? parseInt(limit) : 20,
+    );
+  }
+
   // ==================== CODE REVIEW CENTER ====================
 
   @Get('pull-requests')

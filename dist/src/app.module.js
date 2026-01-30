@@ -22,6 +22,7 @@ const projects_module_1 = require("./projects/projects.module");
 const project_categories_module_1 = require("./project-categories/project-categories.module");
 const payment_methods_module_1 = require("./payment-methods/payment-methods.module");
 const todos_module_1 = require("./todos/todos.module");
+const calendar_1 = require("./calendar");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -52,6 +53,7 @@ exports.AppModule = AppModule = __decorate([
             project_categories_module_1.ProjectCategoriesModule,
             payment_methods_module_1.PaymentMethodsModule,
             todos_module_1.TodosModule,
+            calendar_1.CalendarModule,
         ],
         providers: [
             {

@@ -23,4 +23,12 @@ export class CreateProjectDto {
   @IsOptional()
   @IsString()
   information?: string;
+
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
 }

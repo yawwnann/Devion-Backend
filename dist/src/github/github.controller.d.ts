@@ -14,20 +14,20 @@ export declare class GithubController {
         hasToken: boolean;
     }>;
     getRepos(user: User): Promise<{
-        url: string;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         repoId: number;
         fullName: string;
         description: string | null;
+        url: string;
         language: string | null;
         stars: number;
         forks: number;
         openIssues: number;
         isPrivate: boolean;
+        userId: string;
         lastSyncedAt: Date;
     }[]>;
     syncRepos(user: User): Promise<{
@@ -48,11 +48,13 @@ export declare class GithubController {
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        order: string | null;
         lastSyncedAt: Date | null;
+        order: string | null;
         status: string;
         information: string | null;
         orderNum: number;
+        dueDate: Date | null;
+        startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
         categoryId: string | null;
@@ -66,11 +68,14 @@ export declare class GithubController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        day: string;
-        title: string;
-        order: number;
         lastSyncedAt: Date | null;
+        order: number;
+        status: string;
+        dueDate: Date | null;
+        title: string;
         isCompleted: boolean;
+        day: string;
+        priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
         githubRepoName: string | null;
@@ -81,17 +86,42 @@ export declare class GithubController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        day: string;
-        title: string;
-        order: number;
         lastSyncedAt: Date | null;
+        order: number;
+        status: string;
+        dueDate: Date | null;
+        title: string;
         isCompleted: boolean;
+        day: string;
+        priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
         githubRepoName: string | null;
         githubLabels: string | null;
         weekId: string;
     }>;
+    createIssueInRepo(user: User, owner: string, repo: string, body: {
+        title: string;
+        body?: string;
+        labels?: string[];
+        assignees?: string[];
+    }): Promise<{
+        number: any;
+        url: any;
+        title: any;
+        state: any;
+        createdAt: any;
+    }>;
+    getRecentCommits(user: User, limit?: string): Promise<{
+        sha: string;
+        message: string;
+        author: string;
+        authorAvatar?: string;
+        date: string;
+        url: string;
+        repo: string;
+        repoUrl: string;
+    }[]>;
     getPullRequests(user: User, state?: 'open' | 'closed' | 'all'): Promise<any[]>;
     getPRDetails(user: User, owner: string, repo: string, number: string): Promise<{
         reviews: any;

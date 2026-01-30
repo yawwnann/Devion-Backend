@@ -62,6 +62,8 @@ export declare class ProjectsController {
         status: string;
         information: string | null;
         orderNum: number;
+        dueDate: Date | null;
+        startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
         categoryId: string | null;
@@ -95,6 +97,8 @@ export declare class ProjectsController {
         status: string;
         information: string | null;
         orderNum: number;
+        dueDate: Date | null;
+        startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
         categoryId: string | null;
@@ -127,6 +131,8 @@ export declare class ProjectsController {
         status: string;
         information: string | null;
         orderNum: number;
+        dueDate: Date | null;
+        startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
         categoryId: string | null;
@@ -143,6 +149,8 @@ export declare class ProjectsController {
         status: string;
         information: string | null;
         orderNum: number;
+        dueDate: Date | null;
+        startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
         categoryId: string | null;
@@ -159,6 +167,8 @@ export declare class ProjectsController {
         status: string;
         information: string | null;
         orderNum: number;
+        dueDate: Date | null;
+        startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
         categoryId: string | null;

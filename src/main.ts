@@ -11,6 +11,17 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
+  // Disable caching - always return 200
+  app.use((req, res, next) => {
+    res.setHeader(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, private',
+    );
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
+
   // Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 

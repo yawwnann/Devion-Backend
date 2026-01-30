@@ -53,6 +53,12 @@ let GithubController = class GithubController {
     syncSingleTodo(user, dto) {
         return this.githubService.syncSingleTodo(user.id, dto.todoId);
     }
+    createIssueInRepo(user, owner, repo, body) {
+        return this.githubService.createIssue(user.id, owner, repo, body);
+    }
+    getRecentCommits(user, limit) {
+        return this.githubService.getRecentCommits(user.id, limit ? parseInt(limit) : 20);
+    }
     getPullRequests(user, state) {
         return this.githubService.getPullRequests(user.id, state);
     }
@@ -145,6 +151,24 @@ __decorate([
     __metadata("design:paramtypes", [Object, dto_1.SyncSingleTodoDto]),
     __metadata("design:returntype", void 0)
 ], GithubController.prototype, "syncSingleTodo", null);
+__decorate([
+    (0, common_1.Post)('repos/:owner/:repo/issues'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('owner')),
+    __param(2, (0, common_1.Param)('repo')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
+    __metadata("design:returntype", void 0)
+], GithubController.prototype, "createIssueInRepo", null);
+__decorate([
+    (0, common_1.Get)('recent-commits'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], GithubController.prototype, "getRecentCommits", null);
 __decorate([
     (0, common_1.Get)('pull-requests'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

@@ -12,6 +12,12 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const logger = new common_1.Logger('Bootstrap');
     app.use((0, helmet_1.default)());
+    app.use((req, res, next) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        next();
+    });
     app.useGlobalFilters(new common_2.GlobalExceptionFilter());
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
