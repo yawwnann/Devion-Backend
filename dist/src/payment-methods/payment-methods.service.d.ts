@@ -7,33 +7,33 @@ export declare class PaymentMethodsService {
     create(userId: string, dto: CreatePaymentMethodDto): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }>;
     findAll(userId: string): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }[]>;
     update(id: string, userId: string, dto: UpdatePaymentMethodDto): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }>;
 }

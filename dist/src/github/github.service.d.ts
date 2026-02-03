@@ -15,20 +15,20 @@ export declare class GithubService {
         hasToken: boolean;
     }>;
     getRepos(userId: string): Promise<{
+        url: string;
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         repoId: number;
         fullName: string;
         description: string | null;
-        url: string;
         language: string | null;
         stars: number;
         forks: number;
         openIssues: number;
         isPrivate: boolean;
-        userId: string;
         lastSyncedAt: Date;
     }[]>;
     syncRepos(userId: string): Promise<{
@@ -98,8 +98,8 @@ export declare class GithubService {
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        lastSyncedAt: Date | null;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -118,13 +118,13 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        lastSyncedAt: Date | null;
+        day: string;
+        title: string;
         order: number;
+        lastSyncedAt: Date | null;
         status: string;
         dueDate: Date | null;
-        title: string;
         isCompleted: boolean;
-        day: string;
         priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
@@ -136,13 +136,13 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        lastSyncedAt: Date | null;
+        day: string;
+        title: string;
         order: number;
+        lastSyncedAt: Date | null;
         status: string;
         dueDate: Date | null;
-        title: string;
         isCompleted: boolean;
-        day: string;
         priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
@@ -168,10 +168,10 @@ export declare class GithubService {
         commits: any[];
     }>;
     getCommitsForTodo(userId: string, todoId: string): Promise<{
+        url: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        url: string;
         sha: string;
         message: string;
         author: string;
@@ -207,4 +207,44 @@ export declare class GithubService {
     }[]>;
     private getWeekStart;
     private getWeekEnd;
+    getContributions(userId: string): Promise<{
+        contributions: {
+            date: string;
+            count: number;
+            level: number;
+        }[];
+        stats: {
+            totalContributions: number;
+            activeDays: number;
+            longestStreak: number;
+            currentStreak: number;
+        };
+        isFallback: boolean;
+    } | {
+        contributions: {
+            date: string;
+            count: number;
+            level: number;
+        }[];
+        stats: {
+            totalContributions: any;
+            activeDays: number;
+            longestStreak: number;
+            currentStreak: number;
+            commits: any;
+            issues: any;
+            pullRequests: any;
+            reviews: any;
+        };
+    }>;
+    private mapContributionLevel;
+    private getContributionsFallback;
+    private calculateStreak;
+    private calculateCurrentStreak;
+    getWorkflowRuns(userId: string, repoName?: string): Promise<any[]>;
+    private formatWorkflowRun;
+    getWorkflows(userId: string, repoName: string): Promise<any>;
+    triggerWorkflow(userId: string, repoName: string, workflowId: string, branch?: string): Promise<{
+        message: string;
+    }>;
 }

@@ -133,7 +133,7 @@ export class CalendarService {
 
         const eventData = {
           title: project.name,
-          description: project.information,
+          description: project.information || '',
           startDate,
           endDate,
           allDay: true,

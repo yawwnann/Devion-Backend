@@ -111,10 +111,7 @@ export class GithubController {
   }
 
   @Get('recent-commits')
-  getRecentCommits(
-    @CurrentUser() user: User,
-    @Query('limit') limit?: string,
-  ) {
+  getRecentCommits(@CurrentUser() user: User, @Query('limit') limit?: string) {
     return this.githubService.getRecentCommits(
       user.id,
       limit ? parseInt(limit) : 20,
@@ -177,6 +174,40 @@ export class GithubController {
       user.id,
       body.comment,
       body.event,
+    );
+  }
+
+  // ==================== CONTRIBUTION GRAPH ====================
+
+  @Get('contributions')
+  getContributions(@CurrentUser() user: User) {
+    return this.githubService.getContributions(user.id);
+  }
+
+  // ==================== GITHUB ACTIONS ====================
+
+  @Get('actions/runs')
+  getWorkflowRuns(@CurrentUser() user: User, @Query('repo') repoName?: string) {
+    return this.githubService.getWorkflowRuns(user.id, repoName);
+  }
+
+  @Get('actions/:repo/workflows')
+  getWorkflows(@CurrentUser() user: User, @Param('repo') repoName: string) {
+    return this.githubService.getWorkflows(user.id, repoName);
+  }
+
+  @Post('actions/:repo/workflows/:workflowId/dispatch')
+  triggerWorkflow(
+    @CurrentUser() user: User,
+    @Param('repo') repoName: string,
+    @Param('workflowId') workflowId: string,
+    @Body() body: { branch?: string },
+  ) {
+    return this.githubService.triggerWorkflow(
+      user.id,
+      repoName,
+      workflowId,
+      body.branch,
     );
   }
 }

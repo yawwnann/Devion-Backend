@@ -8,33 +8,33 @@ export declare class ProjectCategoriesController {
     create(user: User, dto: CreateProjectCategoryDto): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }>;
     findAll(user: User): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }[]>;
     update(id: string, user: User, dto: UpdateProjectCategoryDto): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
         name: string;
+        color: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        color: string;
     }>;
 }

@@ -9,12 +9,12 @@ export declare class ProjectsController {
     constructor(projectsService: ProjectsService, settingsService: ProjectSettingsService);
     getSettings(user: User): Promise<{
         id: string;
-        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        title: string;
+        cover: string | null;
         icon: string | null;
+        title: string;
         description: string | null;
     }>;
     updateSettings(user: User, dto: {
@@ -23,42 +23,38 @@ export declare class ProjectsController {
         icon?: string;
     }): Promise<{
         id: string;
-        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        title: string;
+        cover: string | null;
         icon: string | null;
+        title: string;
         description: string | null;
     }>;
     uploadCover(user: User, file: Express.Multer.File): Promise<{
         id: string;
-        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        title: string;
+        cover: string | null;
         icon: string | null;
+        title: string;
         description: string | null;
     }>;
     removeCover(user: User): Promise<{
         id: string;
-        cover: string | null;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        title: string;
+        cover: string | null;
         icon: string | null;
+        title: string;
         description: string | null;
     }>;
     create(user: User, dto: CreateProjectDto): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -66,8 +62,12 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
+        userId: string;
     }>;
     findAll(user: User): Promise<({
         category: {
@@ -89,11 +89,7 @@ export declare class ProjectsController {
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -101,8 +97,12 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
+        userId: string;
     })[]>;
     getStats(user: User): Promise<{
         total: number;
@@ -123,11 +123,7 @@ export declare class ProjectsController {
     findOne(id: string, user: User): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -135,17 +131,17 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
+        userId: string;
     }>;
     update(id: string, user: User, dto: UpdateProjectDto): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -153,17 +149,17 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
+        userId: string;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -171,7 +167,11 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
+        userId: string;
     }>;
 }

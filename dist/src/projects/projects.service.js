@@ -46,18 +46,38 @@ exports.ProjectsService = void 0;
 const common_1 = require("@nestjs/common");
 const XLSX = __importStar(require("xlsx"));
 const prisma_1 = require("../prisma");
+const calendar_1 = require("../calendar");
 let ProjectsService = class ProjectsService {
     prisma;
-    constructor(prisma) {
+    calendarService;
+    constructor(prisma, calendarService) {
         this.prisma = prisma;
+        this.calendarService = calendarService;
     }
     async create(userId, dto) {
-        return this.prisma.project.create({
-            data: {
-                ...dto,
-                userId,
-            },
+        const data = {
+            ...dto,
+            userId,
+        };
+        if (dto.startDate && dto.startDate.trim() !== "") {
+            data.startDate = new Date(dto.startDate);
+        }
+        else {
+            delete data.startDate;
+        }
+        if (dto.dueDate && dto.dueDate.trim() !== "") {
+            data.dueDate = new Date(dto.dueDate);
+        }
+        else {
+            delete data.dueDate;
+        }
+        const project = await this.prisma.project.create({
+            data,
         });
+        if (dto.startDate || dto.dueDate) {
+            await this.calendarService.syncFromProjects(userId);
+        }
+        return project;
     }
     async findAll(userId) {
         return this.prisma.project.findMany({
@@ -81,13 +101,31 @@ let ProjectsService = class ProjectsService {
     }
     async update(id, userId, dto) {
         await this.findOne(id, userId);
-        return this.prisma.project.update({
+        const data = { ...dto };
+        if (dto.startDate && dto.startDate.trim() !== "") {
+            data.startDate = new Date(dto.startDate);
+        }
+        else if (dto.startDate === "") {
+            data.startDate = null;
+        }
+        if (dto.dueDate && dto.dueDate.trim() !== "") {
+            data.dueDate = new Date(dto.dueDate);
+        }
+        else if (dto.dueDate === "") {
+            data.dueDate = null;
+        }
+        const project = await this.prisma.project.update({
             where: { id },
-            data: dto,
+            data,
         });
+        await this.calendarService.syncFromProjects(userId);
+        return project;
     }
     async remove(id, userId) {
         await this.findOne(id, userId);
+        await this.prisma.calendarEvent.deleteMany({
+            where: { projectId: id },
+        });
         return this.prisma.project.delete({
             where: { id },
         });
@@ -346,6 +384,7 @@ let ProjectsService = class ProjectsService {
 exports.ProjectsService = ProjectsService;
 exports.ProjectsService = ProjectsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_1.PrismaService,
+        calendar_1.CalendarService])
 ], ProjectsService);
 //# sourceMappingURL=projects.service.js.map
