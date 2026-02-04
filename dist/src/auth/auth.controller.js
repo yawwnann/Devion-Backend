@@ -35,13 +35,19 @@ let AuthController = class AuthController {
     async login(dto) {
         return this.authService.login(dto.email, dto.password);
     }
+    async refresh(refreshToken) {
+        if (!refreshToken) {
+            throw new common_1.UnauthorizedException('Refresh token required');
+        }
+        return this.authService.refreshTokens(refreshToken);
+    }
     googleAuth() {
     }
     async googleCallback(req, res) {
         const user = await this.authService.validateGoogleUser(req.user);
         const tokens = this.authService.generateTokens(user.id, user.email);
         const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:5173');
-        res.redirect(`${frontendUrl}/auth/callback?token=${tokens.accessToken}`);
+        res.redirect(`${frontendUrl}/auth/callback?token=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
     }
     getMe(user) {
         const { googleId, password, ...safeUser } = user;
@@ -83,6 +89,14 @@ __decorate([
     __metadata("design:paramtypes", [dto_1.LoginDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('refresh'),
+    (0, throttler_1.SkipThrottle)(),
+    __param(0, (0, common_1.Body)('refreshToken')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "refresh", null);
 __decorate([
     (0, common_1.Get)('google'),
     (0, throttler_1.SkipThrottle)(),

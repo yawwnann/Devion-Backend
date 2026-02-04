@@ -8,7 +8,11 @@ export declare class ProjectsService {
     create(userId: string, dto: CreateProjectDto): Promise<{
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -16,12 +20,8 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
-        lastSyncedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
-        userId: string;
     }>;
     findAll(userId: string): Promise<({
         category: {
@@ -43,7 +43,11 @@ export declare class ProjectsService {
     } & {
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -51,17 +55,17 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
-        lastSyncedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
-        userId: string;
     })[]>;
     findOne(id: string, userId: string): Promise<{
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -69,17 +73,17 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
-        lastSyncedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
-        userId: string;
     }>;
     update(id: string, userId: string, dto: UpdateProjectDto): Promise<{
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -87,17 +91,17 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
-        lastSyncedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
-        userId: string;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
         order: string | null;
+        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -105,12 +109,8 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
-        lastSyncedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         categoryId: string | null;
         paymentId: string | null;
-        userId: string;
     }>;
     getStats(userId: string): Promise<{
         total: number;

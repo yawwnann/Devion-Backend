@@ -15,7 +15,7 @@ import { CreatePageDto, UpdatePageDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-@Controller('pages')
+@Controller('documentation')
 @UseGuards(JwtAuthGuard)
 export class PagesController {
   constructor(private pagesService: PagesService) {}

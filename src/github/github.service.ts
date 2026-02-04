@@ -7,6 +7,42 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma';
+import type {
+  GitHubUser,
+  GitHubRepository,
+  GitHubCommit,
+  GitHubIssueSearchItem,
+  GitHubSearchResponse,
+  GitHubPRDetail,
+  GitHubReview,
+  GitHubGraphQLResponse,
+  GitHubUserContributions,
+  GitHubWorkflowRun,
+  GitHubWorkflowRunsResponse,
+  GitHubWorkflow,
+  GitHubWorkflowsResponse,
+} from './github.types';
+
+interface FormattedWorkflowRun {
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  branch: string;
+  event: string;
+  url: string;
+  createdAt: string;
+  updatedAt: string;
+  runNumber: number;
+  actor: {
+    login: string | undefined;
+    avatar: string | undefined;
+  };
+  headCommit: {
+    message: string | undefined;
+    author: string | undefined;
+  };
+}
 
 interface GitHubRepoResponse {
   id: number;
@@ -112,17 +148,20 @@ export class GithubService {
     // If token is provided, verify it works
     if (token) {
       try {
-        const response = await axios.get(`${this.GITHUB_API}/user`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github.v3+json',
+        const response = await axios.get<GitHubUser>(
+          `${this.GITHUB_API}/user`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/vnd.github.v3+json',
+            },
           },
-        });
+        );
 
         if (!response.data?.login) {
           throw new BadRequestException('Invalid GitHub token');
         }
-      } catch (error) {
+      } catch {
         throw new BadRequestException('Invalid GitHub token');
       }
     }
@@ -216,7 +255,8 @@ export class GithubService {
       throw new BadRequestException('Failed to fetch GitHub repos');
     }
 
-    const repos: GitHubRepoResponse[] = await response.json();
+    const repos: GitHubRepoResponse[] =
+      (await response.json()) as GitHubRepoResponse[];
     const now = new Date();
 
     // Use transaction with increased timeout for many repos
@@ -318,7 +358,9 @@ export class GithubService {
     }
 
     const url = `${this.GITHUB_API}/search/issues?q=is:pr+author:${user.githubUsername}+state:${state}&sort=updated&order=desc&per_page=50`;
-    const response = await axios.get(url, {
+    const response = await axios.get<
+      GitHubSearchResponse<GitHubIssueSearchItem>
+    >(url, {
       headers: {
         Authorization: `Bearer ${user.githubAccessToken}`,
         Accept: 'application/vnd.github.v3+json',
@@ -327,37 +369,39 @@ export class GithubService {
 
     // Enrich PRs with full details (additions, deletions, changed_files)
     const prs = await Promise.all(
-      response.data.items.slice(0, 20).map(async (pr: any) => {
-        try {
-          // Extract owner/repo from pr.repository_url
-          const repoPath = pr.repository_url.replace(
-            'https://api.github.com/repos/',
-            '',
-          );
-          const [owner, repo] = repoPath.split('/');
+      response.data.items
+        .slice(0, 20)
+        .map(async (pr: GitHubIssueSearchItem) => {
+          try {
+            // Extract owner/repo from pr.repository_url
+            const repoPath: string = pr.repository_url.replace(
+              'https://api.github.com/repos/',
+              '',
+            );
+            const [owner, repo]: string[] = repoPath.split('/');
 
-          // Fetch full PR details
-          const prDetail = await axios.get(
-            `${this.GITHUB_API}/repos/${owner}/${repo}/pulls/${pr.number}`,
-            {
-              headers: {
-                Authorization: `Bearer ${user.githubAccessToken}`,
-                Accept: 'application/vnd.github.v3+json',
+            // Fetch full PR details
+            const prDetail = await axios.get<GitHubPRDetail>(
+              `${this.GITHUB_API}/repos/${owner}/${repo}/pulls/${pr.number}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${user.githubAccessToken}`,
+                  Accept: 'application/vnd.github.v3+json',
+                },
               },
-            },
-          );
+            );
 
-          return {
-            ...pr,
-            additions: prDetail.data.additions,
-            deletions: prDetail.data.deletions,
-            changed_files: prDetail.data.changed_files,
-          };
-        } catch (error) {
-          // If fetch fails, return PR without stats
-          return pr;
-        }
-      }),
+            return {
+              ...pr,
+              additions: prDetail.data.additions,
+              deletions: prDetail.data.deletions,
+              changed_files: prDetail.data.changed_files,
+            };
+          } catch {
+            // If fetch fails, return PR without stats
+            return pr;
+          }
+        }),
     );
 
     return prs;
@@ -388,7 +432,7 @@ export class GithubService {
 
     // Get reviews
     const reviewsUrl = `${this.GITHUB_API}/repos/${owner}/${repo}/pulls/${prNumber}/reviews`;
-    const reviewsResponse = await axios.get(reviewsUrl, {
+    const reviewsResponse = await axios.get<GitHubReview[]>(reviewsUrl, {
       headers: {
         Authorization: `Bearer ${user.githubAccessToken}`,
         Accept: 'application/vnd.github.v3+json',
@@ -417,7 +461,17 @@ export class GithubService {
     }
 
     const url = `${this.GITHUB_API}/repos/${owner}/${repo}/pulls/${prNumber}/files`;
-    const response = await axios.get(url, {
+    const response = await axios.get<
+      Array<{
+        sha: string;
+        filename: string;
+        status: string;
+        additions: number;
+        deletions: number;
+        changes: number;
+        patch?: string;
+      }>
+    >(url, {
       headers: {
         Authorization: `Bearer ${user.githubAccessToken}`,
         Accept: 'application/vnd.github.v3+json',
@@ -457,15 +511,19 @@ export class GithubService {
           },
         },
       );
-      return response.data;
-    } catch (error: any) {
+      return response.data as GitHubReview;
+    } catch (error: unknown) {
       // Handle specific GitHub errors
-      if (error.response?.status === 422) {
-        const message = error.response?.data?.message || 'Validation failed';
-        // Common 422 errors:
-        // - Can't approve your own PR
-        // - Pull request review thread is outdated
-        throw new BadRequestException(message);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 422) {
+          const message =
+            (error.response?.data as { message?: string })?.message ||
+            'Validation failed';
+          // Common 422 errors:
+          // - Can't approve your own PR
+          // - Pull request review thread is outdated
+          throw new BadRequestException(message);
+        }
       }
       throw error;
     }
@@ -522,9 +580,10 @@ export class GithubService {
       if (!response.ok) {
         throw new BadRequestException('GitHub repository not found');
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       throw new BadRequestException(
-        'Failed to verify GitHub repository: ' + error.message,
+        'Failed to verify GitHub repository: ' + message,
       );
     }
 
@@ -563,7 +622,7 @@ export class GithubService {
       throw new BadRequestException('Failed to fetch GitHub issues');
     }
 
-    const issues: GitHubIssue[] = await response.json();
+    const issues: GitHubIssue[] = (await response.json()) as GitHubIssue[];
 
     // Get or create current week
     const now = new Date();
@@ -763,7 +822,7 @@ export class GithubService {
     const searchQuery = `repo:${repoOwner}/${repoName} ${issueNumber}`;
 
     try {
-      const response = await axios.get(
+      const response = await axios.get<GitHubSearchResponse<GitHubCommit>>(
         `${this.GITHUB_API}/search/commits?q=${encodeURIComponent(searchQuery)}&sort=committer-date&order=desc&per_page=50`,
         {
           headers: {
@@ -773,18 +832,19 @@ export class GithubService {
         },
       );
 
-      return response.data.items.map((commit: any) => ({
+      return response.data.items.map((commit: GitHubCommit) => ({
         sha: commit.sha,
         message: commit.commit.message,
         author: commit.commit.author?.name || 'Unknown',
         authorEmail: commit.commit.author?.email,
         authorAvatar: commit.author?.avatar_url,
-        url: commit.url,
+        url: commit.html_url,
         htmlUrl: commit.html_url,
         committedAt: new Date(commit.commit.author?.date || new Date()),
       }));
-    } catch (error) {
-      this.logger.error(`Failed to fetch commits: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to fetch commits: ${message}`);
       return [];
     }
   }
@@ -807,7 +867,7 @@ export class GithubService {
       throw new BadRequestException('GitHub access token required');
     }
 
-    const response = await axios.get(
+    const response = await axios.get<GitHubCommit>(
       `${this.GITHUB_API}/repos/${repoOwner}/${repoName}/commits/${sha}`,
       {
         headers: {
@@ -823,7 +883,7 @@ export class GithubService {
       author: response.data.commit.author?.name || 'Unknown',
       authorEmail: response.data.commit.author?.email,
       authorAvatar: response.data.author?.avatar_url,
-      url: response.data.url,
+      url: response.data.html_url,
       htmlUrl: response.data.html_url,
       additions: response.data.stats?.additions || 0,
       deletions: response.data.stats?.deletions || 0,
@@ -941,7 +1001,13 @@ export class GithubService {
     }
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<{
+        number: number;
+        html_url: string;
+        title: string;
+        state: string;
+        created_at: string;
+      }>(
         `${this.GITHUB_API}/repos/${repoOwner}/${repoName}/issues`,
         {
           title: issueData.title,
@@ -964,8 +1030,9 @@ export class GithubService {
         state: response.data.state,
         createdAt: response.data.created_at,
       };
-    } catch (error) {
-      console.error('Failed to create GitHub issue:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error('Failed to create GitHub issue:', message);
       throw new BadRequestException('Failed to create GitHub issue');
     }
   }
@@ -982,7 +1049,7 @@ export class GithubService {
 
     try {
       // Get user's repos first
-      const reposResponse = await axios.get(
+      const reposResponse = await axios.get<GitHubRepository[]>(
         `${this.GITHUB_API}/users/${user.githubUsername}/repos`,
         {
           headers: {
@@ -1011,7 +1078,7 @@ export class GithubService {
       for (const repo of reposResponse.data.slice(0, 10)) {
         // Scan top 10 active repos
         try {
-          const commitsResponse = await axios.get(
+          const commitsResponse = await axios.get<GitHubCommit[]>(
             `${this.GITHUB_API}/repos/${user.githubUsername}/${repo.name}/commits`,
             {
               headers: {
@@ -1025,7 +1092,7 @@ export class GithubService {
           );
 
           commits.push(
-            ...commitsResponse.data.map((commit: any) => ({
+            ...commitsResponse.data.map((commit: GitHubCommit) => ({
               sha: commit.sha,
               message: commit.commit.message,
               author: commit.commit.author.name,
@@ -1036,8 +1103,11 @@ export class GithubService {
               repoUrl: repo.html_url,
             })),
           );
-        } catch (error) {
-          console.error(`Failed to fetch commits for ${repo.name}:`, error);
+        } catch (error: unknown) {
+          this.logger.error(
+            `Failed to fetch commits for ${repo.name}:`,
+            error instanceof Error ? error.message : 'Unknown error',
+          );
         }
       }
 
@@ -1045,8 +1115,11 @@ export class GithubService {
       return commits
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, limit);
-    } catch (error) {
-      console.error('Failed to fetch recent commits:', error);
+    } catch (error: unknown) {
+      this.logger.error(
+        'Failed to fetch recent commits:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw new BadRequestException('Failed to fetch recent commits');
     }
   }
@@ -1118,7 +1191,9 @@ export class GithubService {
           }
         `;
 
-        const response = await axios.post(
+        const response = await axios.post<
+          GitHubGraphQLResponse<GitHubUserContributions>
+        >(
           'https://api.github.com/graphql',
           {
             query,
@@ -1169,6 +1244,31 @@ export class GithubService {
         const longestStreak = this.calculateStreak(contributionMap);
         const currentStreak = this.calculateCurrentStreak(contributionMap);
 
+        // Get repository breakdown with timeout fallback
+        let repositoryBreakdown: Array<{
+          name: string;
+          commits: number;
+          additions: number;
+          deletions: number;
+          language: string | null;
+        }> = [];
+        try {
+          repositoryBreakdown = await Promise.race([
+            this.getRepositoryBreakdown(
+              user.githubUsername,
+              user.githubAccessToken,
+            ),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout')), 10000),
+            ),
+          ]);
+        } catch (error: unknown) {
+          this.logger.warn(
+            `Repository breakdown skipped: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          repositoryBreakdown = [];
+        }
+
         return {
           contributions,
           stats: {
@@ -1182,13 +1282,16 @@ export class GithubService {
             pullRequests: collection.totalPullRequestContributions,
             reviews: collection.totalPullRequestReviewContributions,
           },
+          repositoryBreakdown,
         };
       }
 
       // Fallback: If no token, use REST API to estimate from commits
       return this.getContributionsFallback(user.githubUsername);
-    } catch (error) {
-      this.logger.error(`Failed to fetch contributions: ${error}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to fetch contributions: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Try fallback method
       return this.getContributionsFallback(user.githubUsername);
     }
@@ -1219,7 +1322,7 @@ export class GithubService {
       };
 
       // Get user's repos
-      const reposResponse = await axios.get(
+      const reposResponse = await axios.get<GitHubRepository[]>(
         `${this.GITHUB_API}/users/${username}/repos`,
         {
           headers,
@@ -1241,7 +1344,7 @@ export class GithubService {
       // Get commits from each repo (more repos for better accuracy)
       for (const repo of reposResponse.data.slice(0, 20)) {
         try {
-          const commitsResponse = await axios.get(
+          const commitsResponse = await axios.get<GitHubCommit[]>(
             `${this.GITHUB_API}/repos/${username}/${repo.name}/commits`,
             {
               headers,
@@ -1255,7 +1358,7 @@ export class GithubService {
           );
 
           for (const commit of commitsResponse.data) {
-            const date = commit.commit.author.date.split('T')[0];
+            const date: string = commit.commit.author.date.split('T')[0];
             contributionMap[date] = (contributionMap[date] || 0) + 1;
           }
         } catch {
@@ -1345,7 +1448,7 @@ export class GithubService {
   ): number {
     const today = new Date();
     let streak = 0;
-    let checkDate = new Date(today);
+    const checkDate = new Date(today);
 
     while (true) {
       const dateStr = checkDate.toISOString().split('T')[0];
@@ -1358,6 +1461,83 @@ export class GithubService {
     }
 
     return streak;
+  }
+
+  private async getRepositoryBreakdown(username: string, accessToken?: string) {
+    try {
+      const headers: Record<string, string> = {
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'Devion-App',
+      };
+
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      // Calculate date range (last 365 days)
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setFullYear(startDate.getFullYear() - 1);
+
+      // Get user's repos
+      const reposResponse = await axios.get<GitHubRepository[]>(
+        `${this.GITHUB_API}/users/${username}/repos`,
+        {
+          headers,
+          params: {
+            per_page: 30,
+            sort: 'pushed',
+          },
+          timeout: 5000,
+        },
+      );
+
+      // Process repos in parallel (max 10 at a time to avoid rate limits)
+      const topRepos: GitHubRepository[] = reposResponse.data.slice(0, 10);
+      const repoPromises = topRepos.map(async (repo: GitHubRepository) => {
+        try {
+          const commitsResponse = await axios.get<GitHubCommit[]>(
+            `${this.GITHUB_API}/repos/${username}/${repo.name}/commits`,
+            {
+              headers,
+              params: {
+                author: username,
+                since: startDate.toISOString(),
+                until: endDate.toISOString(),
+                per_page: 100,
+              },
+              timeout: 5000,
+            },
+          );
+
+          if (commitsResponse.data.length > 0) {
+            return {
+              name: repo.name,
+              commits: commitsResponse.data.length,
+              additions: 0, // Skip detailed stats to avoid extra API calls
+              deletions: 0,
+              language: repo.language,
+            };
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      });
+
+      const results = await Promise.all(repoPromises);
+      const repoBreakdown = results.filter(
+        (r): r is NonNullable<typeof r> => r !== null,
+      );
+
+      // Sort by commits count
+      return repoBreakdown.sort((a, b) => b.commits - a.commits);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to get repository breakdown: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
+    }
   }
 
   // ==================== GITHUB ACTIONS ====================
@@ -1383,11 +1563,16 @@ export class GithubService {
     };
 
     try {
-      const workflows: any[] = [];
+      const workflows: Array<
+        FormattedWorkflowRun & {
+          repo: string;
+          repoFullName?: string;
+        }
+      > = [];
 
       if (repoName) {
         // Get workflows for specific repo
-        const response = await axios.get(
+        const response = await axios.get<GitHubWorkflowRunsResponse>(
           `${this.GITHUB_API}/repos/${user.githubUsername}/${repoName}/actions/runs`,
           {
             headers,
@@ -1395,25 +1580,28 @@ export class GithubService {
           },
         );
         workflows.push(
-          ...response.data.workflow_runs.map((run: any) => ({
+          ...response.data.workflow_runs.map((run: GitHubWorkflowRun) => ({
             ...this.formatWorkflowRun(run),
             repo: repoName,
           })),
         );
       } else {
         // Get repos first
-        const reposResponse = await axios.get(`${this.GITHUB_API}/user/repos`, {
-          headers,
-          params: {
-            per_page: 10,
-            sort: 'pushed',
+        const reposResponse = await axios.get<GitHubRepository[]>(
+          `${this.GITHUB_API}/user/repos`,
+          {
+            headers,
+            params: {
+              per_page: 10,
+              sort: 'pushed',
+            },
           },
-        });
+        );
 
         // Get workflow runs from each repo
         for (const repo of reposResponse.data) {
           try {
-            const runsResponse = await axios.get(
+            const runsResponse = await axios.get<GitHubWorkflowRunsResponse>(
               `${this.GITHUB_API}/repos/${repo.full_name}/actions/runs`,
               {
                 headers,
@@ -1422,11 +1610,13 @@ export class GithubService {
             );
 
             workflows.push(
-              ...runsResponse.data.workflow_runs.map((run: any) => ({
-                ...this.formatWorkflowRun(run),
-                repo: repo.name,
-                repoFullName: repo.full_name,
-              })),
+              ...runsResponse.data.workflow_runs.map(
+                (run: GitHubWorkflowRun) => ({
+                  ...this.formatWorkflowRun(run),
+                  repo: repo.name,
+                  repoFullName: repo.full_name,
+                }),
+              ),
             );
           } catch {
             // Skip repos without actions
@@ -1441,13 +1631,15 @@ export class GithubService {
       );
 
       return workflows.slice(0, 30);
-    } catch (error) {
-      this.logger.error(`Failed to fetch workflow runs: ${error}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to fetch workflow runs: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw new BadRequestException('Failed to fetch GitHub Actions');
     }
   }
 
-  private formatWorkflowRun(run: any) {
+  private formatWorkflowRun(run: GitHubWorkflowRun) {
     return {
       id: run.id,
       name: run.name,
@@ -1484,7 +1676,7 @@ export class GithubService {
     }
 
     try {
-      const response = await axios.get(
+      const response = await axios.get<GitHubWorkflowsResponse>(
         `${this.GITHUB_API}/repos/${user.githubUsername}/${repoName}/actions/workflows`,
         {
           headers: {
@@ -1494,7 +1686,7 @@ export class GithubService {
         },
       );
 
-      return response.data.workflows.map((workflow: any) => ({
+      return response.data.workflows.map((workflow: GitHubWorkflow) => ({
         id: workflow.id,
         name: workflow.name,
         path: workflow.path,
@@ -1502,8 +1694,10 @@ export class GithubService {
         url: workflow.html_url,
         badgeUrl: workflow.badge_url,
       }));
-    } catch (error) {
-      this.logger.error(`Failed to fetch workflows: ${error}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to fetch workflows: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw new BadRequestException('Failed to fetch workflows');
     }
   }

@@ -17,6 +17,7 @@ import {
   CreateIssueDto,
   LinkRepoDto,
   SyncSingleTodoDto,
+  SubmitReviewDto,
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -164,8 +165,7 @@ export class GithubController {
     @Param('owner') owner: string,
     @Param('repo') repo: string,
     @Param('number') number: string,
-    @Body()
-    body: { comment: string; event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT' },
+    @Body() body: SubmitReviewDto,
   ) {
     return this.githubService.submitReview(
       owner,

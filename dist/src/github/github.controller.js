@@ -217,7 +217,7 @@ __decorate([
     __param(3, (0, common_1.Param)('number')),
     __param(4, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, Object]),
+    __metadata("design:paramtypes", [Object, String, String, String, dto_1.SubmitReviewDto]),
     __metadata("design:returntype", void 0)
 ], GithubController.prototype, "submitReview", null);
 __decorate([
