@@ -6,18 +6,48 @@ import {
 import * as XLSX from 'xlsx';
 import { PrismaService } from '../prisma';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
+import { CalendarService } from '../calendar';
 
 @Injectable()
 export class ProjectsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private calendarService: CalendarService,
+  ) {}
 
   async create(userId: string, dto: CreateProjectDto) {
-    return this.prisma.project.create({
-      data: {
-        ...dto,
-        userId,
-      },
+    // Convert date strings to DateTime objects
+    const data: any = {
+      ...dto,
+      userId,
+    };
+
+    // Convert startDate string to DateTime if provided and not empty
+    if (dto.startDate && dto.startDate.trim() !== "") {
+      data.startDate = new Date(dto.startDate);
+    } else {
+      // Remove empty startDate from data to avoid Prisma error
+      delete data.startDate;
+    }
+
+    // Convert dueDate string to DateTime if provided and not empty
+    if (dto.dueDate && dto.dueDate.trim() !== "") {
+      data.dueDate = new Date(dto.dueDate);
+    } else {
+      // Remove empty dueDate from data to avoid Prisma error
+      delete data.dueDate;
+    }
+
+    const project = await this.prisma.project.create({
+      data,
     });
+
+    // Auto-sync to calendar if project has dates
+    if (dto.startDate || dto.dueDate) {
+      await this.calendarService.syncFromProjects(userId);
+    }
+
+    return project;
   }
 
   async findAll(userId: string) {
@@ -45,14 +75,43 @@ export class ProjectsService {
   async update(id: string, userId: string, dto: UpdateProjectDto) {
     await this.findOne(id, userId);
 
-    return this.prisma.project.update({
+    // Convert date strings to DateTime objects
+    const data: any = { ...dto };
+
+    // Convert startDate string to DateTime if provided and not empty
+    if (dto.startDate && dto.startDate.trim() !== "") {
+      data.startDate = new Date(dto.startDate);
+    } else if (dto.startDate === "") {
+      // If explicitly set to empty string, set to null
+      data.startDate = null;
+    }
+
+    // Convert dueDate string to DateTime if provided and not empty
+    if (dto.dueDate && dto.dueDate.trim() !== "") {
+      data.dueDate = new Date(dto.dueDate);
+    } else if (dto.dueDate === "") {
+      // If explicitly set to empty string, set to null
+      data.dueDate = null;
+    }
+
+    const project = await this.prisma.project.update({
       where: { id },
-      data: dto,
+      data,
     });
+
+    // Auto-sync to calendar after update
+    await this.calendarService.syncFromProjects(userId);
+
+    return project;
   }
 
   async remove(id: string, userId: string) {
     await this.findOne(id, userId);
+
+    // Delete associated calendar events first
+    await this.prisma.calendarEvent.deleteMany({
+      where: { projectId: id },
+    });
 
     return this.prisma.project.delete({
       where: { id },

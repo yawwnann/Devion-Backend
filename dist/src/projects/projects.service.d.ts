@@ -1,8 +1,10 @@
 import { PrismaService } from '../prisma';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
+import { CalendarService } from '../calendar';
 export declare class ProjectsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private calendarService;
+    constructor(prisma: PrismaService, calendarService: CalendarService);
     create(userId: string, dto: CreateProjectDto): Promise<{
         id: string;
         name: string;

@@ -12,9 +12,11 @@ export declare class AuthService {
     constructor(prisma: PrismaService, jwtService: JwtService);
     register(email: string, password: string, name: string): Promise<{
         accessToken: string;
+        refreshToken: string;
     }>;
     login(email: string, password: string): Promise<{
         accessToken: string;
+        refreshToken: string;
     }>;
     validateGoogleUser(googleUser: GoogleUser): Promise<{
         id: string;
@@ -32,7 +34,12 @@ export declare class AuthService {
     }>;
     generateTokens(userId: string, email: string): {
         accessToken: string;
+        refreshToken: string;
     };
+    refreshTokens(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
     updateProfile(userId: string, data: {
         name?: string;
         bio?: string;

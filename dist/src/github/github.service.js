@@ -63,7 +63,7 @@ let GithubService = GithubService_1 = class GithubService {
                     throw new common_1.BadRequestException('Invalid GitHub token');
                 }
             }
-            catch (error) {
+            catch {
                 throw new common_1.BadRequestException('Invalid GitHub token');
             }
         }
@@ -136,7 +136,7 @@ let GithubService = GithubService_1 = class GithubService {
         if (!response.ok) {
             throw new common_1.BadRequestException('Failed to fetch GitHub repos');
         }
-        const repos = await response.json();
+        const repos = (await response.json());
         const now = new Date();
         await this.prisma.$transaction(async (tx) => {
             await tx.gitHubRepo.deleteMany({
@@ -219,7 +219,9 @@ let GithubService = GithubService_1 = class GithubService {
                 Accept: 'application/vnd.github.v3+json',
             },
         });
-        const prs = await Promise.all(response.data.items.slice(0, 20).map(async (pr) => {
+        const prs = await Promise.all(response.data.items
+            .slice(0, 20)
+            .map(async (pr) => {
             try {
                 const repoPath = pr.repository_url.replace('https://api.github.com/repos/', '');
                 const [owner, repo] = repoPath.split('/');
@@ -236,7 +238,7 @@ let GithubService = GithubService_1 = class GithubService {
                     changed_files: prDetail.data.changed_files,
                 };
             }
-            catch (error) {
+            catch {
                 return pr;
             }
         }));
@@ -305,9 +307,12 @@ let GithubService = GithubService_1 = class GithubService {
             return response.data;
         }
         catch (error) {
-            if (error.response?.status === 422) {
-                const message = error.response?.data?.message || 'Validation failed';
-                throw new common_1.BadRequestException(message);
+            if (axios_1.default.isAxiosError(error)) {
+                if (error.response?.status === 422) {
+                    const message = error.response?.data?.message ||
+                        'Validation failed';
+                    throw new common_1.BadRequestException(message);
+                }
             }
             throw error;
         }
@@ -348,7 +353,8 @@ let GithubService = GithubService_1 = class GithubService {
             }
         }
         catch (error) {
-            throw new common_1.BadRequestException('Failed to verify GitHub repository: ' + error.message);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            throw new common_1.BadRequestException('Failed to verify GitHub repository: ' + message);
         }
         return this.prisma.project.update({
             where: { id: projectId, userId },
@@ -374,7 +380,7 @@ let GithubService = GithubService_1 = class GithubService {
         if (!response.ok) {
             throw new common_1.BadRequestException('Failed to fetch GitHub issues');
         }
-        const issues = await response.json();
+        const issues = (await response.json());
         const now = new Date();
         const weekStart = this.getWeekStart(now);
         const weekEnd = this.getWeekEnd(weekStart);
@@ -528,13 +534,14 @@ let GithubService = GithubService_1 = class GithubService {
                 author: commit.commit.author?.name || 'Unknown',
                 authorEmail: commit.commit.author?.email,
                 authorAvatar: commit.author?.avatar_url,
-                url: commit.url,
+                url: commit.html_url,
                 htmlUrl: commit.html_url,
                 committedAt: new Date(commit.commit.author?.date || new Date()),
             }));
         }
         catch (error) {
-            this.logger.error(`Failed to fetch commits: ${error.message}`);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Failed to fetch commits: ${message}`);
             return [];
         }
     }
@@ -558,7 +565,7 @@ let GithubService = GithubService_1 = class GithubService {
             author: response.data.commit.author?.name || 'Unknown',
             authorEmail: response.data.commit.author?.email,
             authorAvatar: response.data.author?.avatar_url,
-            url: response.data.url,
+            url: response.data.html_url,
             htmlUrl: response.data.html_url,
             additions: response.data.stats?.additions || 0,
             deletions: response.data.stats?.deletions || 0,
@@ -650,7 +657,8 @@ let GithubService = GithubService_1 = class GithubService {
             };
         }
         catch (error) {
-            console.error('Failed to create GitHub issue:', error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error('Failed to create GitHub issue:', message);
             throw new common_1.BadRequestException('Failed to create GitHub issue');
         }
     }
@@ -696,7 +704,7 @@ let GithubService = GithubService_1 = class GithubService {
                     })));
                 }
                 catch (error) {
-                    console.error(`Failed to fetch commits for ${repo.name}:`, error);
+                    this.logger.error(`Failed to fetch commits for ${repo.name}:`, error instanceof Error ? error.message : 'Unknown error');
                 }
             }
             return commits
@@ -704,7 +712,7 @@ let GithubService = GithubService_1 = class GithubService {
                 .slice(0, limit);
         }
         catch (error) {
-            console.error('Failed to fetch recent commits:', error);
+            this.logger.error('Failed to fetch recent commits:', error instanceof Error ? error.message : 'Unknown error');
             throw new common_1.BadRequestException('Failed to fetch recent commits');
         }
     }
@@ -721,6 +729,439 @@ let GithubService = GithubService_1 = class GithubService {
         d.setDate(d.getDate() + 6);
         d.setHours(23, 59, 59, 999);
         return d;
+    }
+    async getContributions(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user?.githubUsername) {
+            throw new common_1.NotFoundException('GitHub username not set');
+        }
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Devion-App',
+            };
+            if (user.githubAccessToken) {
+                headers['Authorization'] = `Bearer ${user.githubAccessToken}`;
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setFullYear(startDate.getFullYear() - 1);
+                const query = `
+          query($username: String!, $from: DateTime!, $to: DateTime!) {
+            user(login: $username) {
+              contributionsCollection(from: $from, to: $to) {
+                totalCommitContributions
+                totalIssueContributions
+                totalPullRequestContributions
+                totalPullRequestReviewContributions
+                contributionCalendar {
+                  totalContributions
+                  weeks {
+                    contributionDays {
+                      date
+                      contributionCount
+                      contributionLevel
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `;
+                const response = await axios_1.default.post('https://api.github.com/graphql', {
+                    query,
+                    variables: {
+                        username: user.githubUsername,
+                        from: startDate.toISOString(),
+                        to: endDate.toISOString(),
+                    },
+                }, { headers });
+                if (response.data.errors) {
+                    this.logger.error(`GraphQL errors: ${JSON.stringify(response.data.errors)}`);
+                    throw new Error('GraphQL query failed');
+                }
+                const collection = response.data.data?.user?.contributionsCollection;
+                if (!collection) {
+                    throw new Error('No contribution data found');
+                }
+                const calendar = collection.contributionCalendar;
+                const contributions = [];
+                for (const week of calendar.weeks) {
+                    for (const day of week.contributionDays) {
+                        contributions.push({
+                            date: day.date,
+                            count: day.contributionCount,
+                            level: this.mapContributionLevel(day.contributionLevel),
+                        });
+                    }
+                }
+                const contributionMap = {};
+                for (const c of contributions) {
+                    if (c.count > 0) {
+                        contributionMap[c.date] = c.count;
+                    }
+                }
+                const longestStreak = this.calculateStreak(contributionMap);
+                const currentStreak = this.calculateCurrentStreak(contributionMap);
+                let repositoryBreakdown = [];
+                try {
+                    repositoryBreakdown = await Promise.race([
+                        this.getRepositoryBreakdown(user.githubUsername, user.githubAccessToken),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000)),
+                    ]);
+                }
+                catch (error) {
+                    this.logger.warn(`Repository breakdown skipped: ${error instanceof Error ? error.message : String(error)}`);
+                    repositoryBreakdown = [];
+                }
+                return {
+                    contributions,
+                    stats: {
+                        totalContributions: calendar.totalContributions,
+                        activeDays: contributions.filter((c) => c.count > 0).length,
+                        longestStreak,
+                        currentStreak,
+                        commits: collection.totalCommitContributions,
+                        issues: collection.totalIssueContributions,
+                        pullRequests: collection.totalPullRequestContributions,
+                        reviews: collection.totalPullRequestReviewContributions,
+                    },
+                    repositoryBreakdown,
+                };
+            }
+            return this.getContributionsFallback(user.githubUsername);
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch contributions: ${error instanceof Error ? error.message : String(error)}`);
+            return this.getContributionsFallback(user.githubUsername);
+        }
+    }
+    mapContributionLevel(level) {
+        switch (level) {
+            case 'NONE':
+                return 0;
+            case 'FIRST_QUARTILE':
+                return 1;
+            case 'SECOND_QUARTILE':
+                return 2;
+            case 'THIRD_QUARTILE':
+                return 3;
+            case 'FOURTH_QUARTILE':
+                return 4;
+            default:
+                return 0;
+        }
+    }
+    async getContributionsFallback(username) {
+        try {
+            const headers = {
+                Accept: 'application/vnd.github.v3+json',
+                'User-Agent': 'Devion-App',
+            };
+            const reposResponse = await axios_1.default.get(`${this.GITHUB_API}/users/${username}/repos`, {
+                headers,
+                params: {
+                    per_page: 30,
+                    sort: 'pushed',
+                },
+            });
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            const contributionMap = {};
+            for (const repo of reposResponse.data.slice(0, 20)) {
+                try {
+                    const commitsResponse = await axios_1.default.get(`${this.GITHUB_API}/repos/${username}/${repo.name}/commits`, {
+                        headers,
+                        params: {
+                            author: username,
+                            since: startDate.toISOString(),
+                            until: endDate.toISOString(),
+                            per_page: 100,
+                        },
+                    });
+                    for (const commit of commitsResponse.data) {
+                        const date = commit.commit.author.date.split('T')[0];
+                        contributionMap[date] = (contributionMap[date] || 0) + 1;
+                    }
+                }
+                catch {
+                }
+            }
+            const contributions = Object.entries(contributionMap).map(([date, count]) => ({
+                date,
+                count,
+                level: count === 0
+                    ? 0
+                    : count <= 2
+                        ? 1
+                        : count <= 5
+                            ? 2
+                            : count <= 10
+                                ? 3
+                                : 4,
+            }));
+            const totalContributions = Object.values(contributionMap).reduce((sum, count) => sum + count, 0);
+            const activeDays = Object.keys(contributionMap).length;
+            const longestStreak = this.calculateStreak(contributionMap);
+            const currentStreak = this.calculateCurrentStreak(contributionMap);
+            return {
+                contributions,
+                stats: {
+                    totalContributions,
+                    activeDays,
+                    longestStreak,
+                    currentStreak,
+                },
+                isFallback: true,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Fallback contribution fetch failed: ${error}`);
+            return {
+                contributions: [],
+                stats: {
+                    totalContributions: 0,
+                    activeDays: 0,
+                    longestStreak: 0,
+                    currentStreak: 0,
+                },
+                isFallback: true,
+            };
+        }
+    }
+    calculateStreak(contributionMap) {
+        const dates = Object.keys(contributionMap).sort();
+        let maxStreak = 0;
+        let currentStreak = 0;
+        let prevDate = null;
+        for (const dateStr of dates) {
+            const date = new Date(dateStr);
+            if (prevDate) {
+                const diff = (date.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+                if (diff === 1) {
+                    currentStreak++;
+                }
+                else {
+                    maxStreak = Math.max(maxStreak, currentStreak);
+                    currentStreak = 1;
+                }
+            }
+            else {
+                currentStreak = 1;
+            }
+            prevDate = date;
+        }
+        return Math.max(maxStreak, currentStreak);
+    }
+    calculateCurrentStreak(contributionMap) {
+        const today = new Date();
+        let streak = 0;
+        const checkDate = new Date(today);
+        while (true) {
+            const dateStr = checkDate.toISOString().split('T')[0];
+            if (contributionMap[dateStr]) {
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            else {
+                break;
+            }
+        }
+        return streak;
+    }
+    async getRepositoryBreakdown(username, accessToken) {
+        try {
+            const headers = {
+                Accept: 'application/vnd.github.v3+json',
+                'User-Agent': 'Devion-App',
+            };
+            if (accessToken) {
+                headers['Authorization'] = `Bearer ${accessToken}`;
+            }
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            const reposResponse = await axios_1.default.get(`${this.GITHUB_API}/users/${username}/repos`, {
+                headers,
+                params: {
+                    per_page: 30,
+                    sort: 'pushed',
+                },
+                timeout: 5000,
+            });
+            const topRepos = reposResponse.data.slice(0, 10);
+            const repoPromises = topRepos.map(async (repo) => {
+                try {
+                    const commitsResponse = await axios_1.default.get(`${this.GITHUB_API}/repos/${username}/${repo.name}/commits`, {
+                        headers,
+                        params: {
+                            author: username,
+                            since: startDate.toISOString(),
+                            until: endDate.toISOString(),
+                            per_page: 100,
+                        },
+                        timeout: 5000,
+                    });
+                    if (commitsResponse.data.length > 0) {
+                        return {
+                            name: repo.name,
+                            commits: commitsResponse.data.length,
+                            additions: 0,
+                            deletions: 0,
+                            language: repo.language,
+                        };
+                    }
+                    return null;
+                }
+                catch {
+                    return null;
+                }
+            });
+            const results = await Promise.all(repoPromises);
+            const repoBreakdown = results.filter((r) => r !== null);
+            return repoBreakdown.sort((a, b) => b.commits - a.commits);
+        }
+        catch (error) {
+            this.logger.error(`Failed to get repository breakdown: ${error instanceof Error ? error.message : String(error)}`);
+            return [];
+        }
+    }
+    async getWorkflowRuns(userId, repoName) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user?.githubUsername) {
+            throw new common_1.NotFoundException('GitHub username not set');
+        }
+        if (!user.githubAccessToken) {
+            throw new common_1.UnauthorizedException('GitHub token required to access workflow runs');
+        }
+        const headers = {
+            Authorization: `Bearer ${user.githubAccessToken}`,
+            Accept: 'application/vnd.github.v3+json',
+        };
+        try {
+            const workflows = [];
+            if (repoName) {
+                const response = await axios_1.default.get(`${this.GITHUB_API}/repos/${user.githubUsername}/${repoName}/actions/runs`, {
+                    headers,
+                    params: { per_page: 20 },
+                });
+                workflows.push(...response.data.workflow_runs.map((run) => ({
+                    ...this.formatWorkflowRun(run),
+                    repo: repoName,
+                })));
+            }
+            else {
+                const reposResponse = await axios_1.default.get(`${this.GITHUB_API}/user/repos`, {
+                    headers,
+                    params: {
+                        per_page: 10,
+                        sort: 'pushed',
+                    },
+                });
+                for (const repo of reposResponse.data) {
+                    try {
+                        const runsResponse = await axios_1.default.get(`${this.GITHUB_API}/repos/${repo.full_name}/actions/runs`, {
+                            headers,
+                            params: { per_page: 5 },
+                        });
+                        workflows.push(...runsResponse.data.workflow_runs.map((run) => ({
+                            ...this.formatWorkflowRun(run),
+                            repo: repo.name,
+                            repoFullName: repo.full_name,
+                        })));
+                    }
+                    catch {
+                    }
+                }
+            }
+            workflows.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            return workflows.slice(0, 30);
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch workflow runs: ${error instanceof Error ? error.message : String(error)}`);
+            throw new common_1.BadRequestException('Failed to fetch GitHub Actions');
+        }
+    }
+    formatWorkflowRun(run) {
+        return {
+            id: run.id,
+            name: run.name,
+            status: run.status,
+            conclusion: run.conclusion,
+            branch: run.head_branch,
+            event: run.event,
+            url: run.html_url,
+            createdAt: run.created_at,
+            updatedAt: run.updated_at,
+            runNumber: run.run_number,
+            actor: {
+                login: run.actor?.login,
+                avatar: run.actor?.avatar_url,
+            },
+            headCommit: {
+                message: run.head_commit?.message,
+                author: run.head_commit?.author?.name,
+            },
+        };
+    }
+    async getWorkflows(userId, repoName) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user?.githubUsername) {
+            throw new common_1.NotFoundException('GitHub username not set');
+        }
+        if (!user.githubAccessToken) {
+            throw new common_1.UnauthorizedException('GitHub token required');
+        }
+        try {
+            const response = await axios_1.default.get(`${this.GITHUB_API}/repos/${user.githubUsername}/${repoName}/actions/workflows`, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            return response.data.workflows.map((workflow) => ({
+                id: workflow.id,
+                name: workflow.name,
+                path: workflow.path,
+                state: workflow.state,
+                url: workflow.html_url,
+                badgeUrl: workflow.badge_url,
+            }));
+        }
+        catch (error) {
+            this.logger.error(`Failed to fetch workflows: ${error instanceof Error ? error.message : String(error)}`);
+            throw new common_1.BadRequestException('Failed to fetch workflows');
+        }
+    }
+    async triggerWorkflow(userId, repoName, workflowId, branch = 'main') {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user?.githubUsername) {
+            throw new common_1.NotFoundException('GitHub username not set');
+        }
+        if (!user.githubAccessToken) {
+            throw new common_1.UnauthorizedException('GitHub token required');
+        }
+        try {
+            await axios_1.default.post(`${this.GITHUB_API}/repos/${user.githubUsername}/${repoName}/actions/workflows/${workflowId}/dispatches`, { ref: branch }, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            return { message: 'Workflow triggered successfully' };
+        }
+        catch (error) {
+            this.logger.error(`Failed to trigger workflow: ${error}`);
+            throw new common_1.BadRequestException('Failed to trigger workflow');
+        }
     }
 };
 exports.GithubService = GithubService;

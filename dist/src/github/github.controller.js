@@ -71,6 +71,18 @@ let GithubController = class GithubController {
     submitReview(user, owner, repo, number, body) {
         return this.githubService.submitReview(owner, repo, parseInt(number), user.id, body.comment, body.event);
     }
+    getContributions(user) {
+        return this.githubService.getContributions(user.id);
+    }
+    getWorkflowRuns(user, repoName) {
+        return this.githubService.getWorkflowRuns(user.id, repoName);
+    }
+    getWorkflows(user, repoName) {
+        return this.githubService.getWorkflows(user.id, repoName);
+    }
+    triggerWorkflow(user, repoName, workflowId, body) {
+        return this.githubService.triggerWorkflow(user.id, repoName, workflowId, body.branch);
+    }
 };
 exports.GithubController = GithubController;
 __decorate([
@@ -205,9 +217,42 @@ __decorate([
     __param(3, (0, common_1.Param)('number')),
     __param(4, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, Object]),
+    __metadata("design:paramtypes", [Object, String, String, String, dto_1.SubmitReviewDto]),
     __metadata("design:returntype", void 0)
 ], GithubController.prototype, "submitReview", null);
+__decorate([
+    (0, common_1.Get)('contributions'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], GithubController.prototype, "getContributions", null);
+__decorate([
+    (0, common_1.Get)('actions/runs'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('repo')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], GithubController.prototype, "getWorkflowRuns", null);
+__decorate([
+    (0, common_1.Get)('actions/:repo/workflows'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('repo')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], GithubController.prototype, "getWorkflows", null);
+__decorate([
+    (0, common_1.Post)('actions/:repo/workflows/:workflowId/dispatch'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('repo')),
+    __param(2, (0, common_1.Param)('workflowId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
+    __metadata("design:returntype", void 0)
+], GithubController.prototype, "triggerWorkflow", null);
 exports.GithubController = GithubController = __decorate([
     (0, common_1.Controller)('github'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),

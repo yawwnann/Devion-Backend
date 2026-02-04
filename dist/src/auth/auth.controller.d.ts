@@ -9,9 +9,15 @@ export declare class AuthController {
     constructor(authService: AuthService, configService: ConfigService);
     register(dto: RegisterDto): Promise<{
         accessToken: string;
+        refreshToken: string;
     }>;
     login(dto: LoginDto): Promise<{
         accessToken: string;
+        refreshToken: string;
+    }>;
+    refresh(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
     }>;
     googleAuth(): void;
     googleCallback(req: any, res: Response): Promise<void>;

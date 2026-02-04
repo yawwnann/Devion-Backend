@@ -17,4 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./set-github-username.dto"), exports);
 __exportStar(require("./sync-issues.dto"), exports);
 __exportStar(require("./set-github-token.dto"), exports);
+__exportStar(require("./submit-review.dto"), exports);
 //# sourceMappingURL=index.js.map

@@ -1,6 +1,6 @@
 import type { User } from '@prisma/client';
 import { GithubService } from './github.service';
-import { SetGithubUsernameDto, SetGithubTokenDto, SyncIssuesDto, CreateIssueDto, LinkRepoDto, SyncSingleTodoDto } from './dto';
+import { SetGithubUsernameDto, SetGithubTokenDto, SyncIssuesDto, CreateIssueDto, LinkRepoDto, SyncSingleTodoDto, SubmitReviewDto } from './dto';
 export declare class GithubController {
     private githubService;
     constructor(githubService: GithubService);
@@ -106,11 +106,11 @@ export declare class GithubController {
         labels?: string[];
         assignees?: string[];
     }): Promise<{
-        number: any;
-        url: any;
-        title: any;
-        state: any;
-        createdAt: any;
+        number: number;
+        url: string;
+        title: string;
+        state: string;
+        createdAt: string;
     }>;
     getRecentCommits(user: User, limit?: string): Promise<{
         sha: string;
@@ -122,9 +122,27 @@ export declare class GithubController {
         repo: string;
         repoUrl: string;
     }[]>;
-    getPullRequests(user: User, state?: 'open' | 'closed' | 'all'): Promise<any[]>;
+    getPullRequests(user: User, state?: 'open' | 'closed' | 'all'): Promise<(import("./github.types").GitHubIssueSearchItem | {
+        additions: number;
+        deletions: number;
+        changed_files: number;
+        id: number;
+        number: number;
+        title: string;
+        body: string | null;
+        state: string;
+        html_url: string;
+        repository_url: string;
+        labels: Array<{
+            name: string;
+            color: string;
+        }>;
+        created_at: string;
+        updated_at: string;
+        closed_at: string | null;
+    })[]>;
     getPRDetails(user: User, owner: string, repo: string, number: string): Promise<{
-        reviews: any;
+        reviews: import("./github.types").GitHubReview[];
         id: number;
         number: number;
         title: string;
@@ -156,9 +174,87 @@ export declare class GithubController {
             login: string;
         }[];
     }>;
-    getPRFiles(user: User, owner: string, repo: string, number: string): Promise<any>;
-    submitReview(user: User, owner: string, repo: string, number: string, body: {
-        comment: string;
-        event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT';
-    }): Promise<any>;
+    getPRFiles(user: User, owner: string, repo: string, number: string): Promise<{
+        sha: string;
+        filename: string;
+        status: string;
+        additions: number;
+        deletions: number;
+        changes: number;
+        patch?: string;
+    }[]>;
+    submitReview(user: User, owner: string, repo: string, number: string, body: SubmitReviewDto): Promise<import("./github.types").GitHubReview>;
+    getContributions(user: User): Promise<{
+        contributions: {
+            date: string;
+            count: number;
+            level: number;
+        }[];
+        stats: {
+            totalContributions: number;
+            activeDays: number;
+            longestStreak: number;
+            currentStreak: number;
+        };
+        isFallback: boolean;
+    } | {
+        contributions: {
+            date: string;
+            count: number;
+            level: number;
+        }[];
+        stats: {
+            totalContributions: number;
+            activeDays: number;
+            longestStreak: number;
+            currentStreak: number;
+            commits: number;
+            issues: number;
+            pullRequests: number;
+            reviews: number;
+        };
+        repositoryBreakdown: {
+            name: string;
+            commits: number;
+            additions: number;
+            deletions: number;
+            language: string | null;
+        }[];
+    }>;
+    getWorkflowRuns(user: User, repoName?: string): Promise<({
+        id: number;
+        name: string;
+        status: string;
+        conclusion: string | null;
+        branch: string;
+        event: string;
+        url: string;
+        createdAt: string;
+        updatedAt: string;
+        runNumber: number;
+        actor: {
+            login: string;
+            avatar: string;
+        };
+        headCommit: {
+            message: string;
+            author: string;
+        };
+    } & {
+        repo: string;
+        repoFullName?: string;
+    })[]>;
+    getWorkflows(user: User, repoName: string): Promise<{
+        id: number;
+        name: string;
+        path: string;
+        state: string;
+        url: string;
+        badgeUrl: string;
+    }[]>;
+    triggerWorkflow(user: User, repoName: string, workflowId: string, body: {
+        branch?: string;
+    }): Promise<{
+        message: string;
+    }>;
 }

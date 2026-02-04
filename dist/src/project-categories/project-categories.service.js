@@ -55,6 +55,12 @@ let ProjectCategoriesService = class ProjectCategoriesService {
         if (!category || category.userId !== userId) {
             throw new common_1.NotFoundException('Category not found');
         }
+        const projectsUsingCategory = await this.prisma.project.count({
+            where: { categoryId: id },
+        });
+        if (projectsUsingCategory > 0) {
+            throw new common_1.ConflictException(`Cannot delete category. ${projectsUsingCategory} project(s) are using it.`);
+        }
         return this.prisma.projectCategory.delete({ where: { id } });
     }
 };

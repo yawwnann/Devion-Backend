@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
@@ -46,6 +47,15 @@ export class AuthController {
     return this.authService.login(dto.email, dto.password);
   }
 
+  @Post('refresh')
+  @SkipThrottle()
+  async refresh(@Body('refreshToken') refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token required');
+    }
+    return this.authService.refreshTokens(refreshToken);
+  }
+
   @Get('google')
   @SkipThrottle()
   @UseGuards(GoogleAuthGuard)
@@ -64,7 +74,9 @@ export class AuthController {
       'FRONTEND_URL',
       'http://localhost:5173',
     );
-    res.redirect(`${frontendUrl}/auth/callback?token=${tokens.accessToken}`);
+    res.redirect(
+      `${frontendUrl}/auth/callback?token=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+    );
   }
 
   @Get('me')

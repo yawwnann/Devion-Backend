@@ -101,7 +101,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PagesController.prototype, "remove", null);
 exports.PagesController = PagesController = __decorate([
-    (0, common_1.Controller)('pages'),
+    (0, common_1.Controller)('documentation'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [pages_service_1.PagesService])
 ], PagesController);
