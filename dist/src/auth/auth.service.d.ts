@@ -1,6 +1,6 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma';
-interface GoogleUser {
+export interface GoogleUser {
     googleId: string;
     email: string;
     name?: string;
@@ -57,4 +57,3 @@ export declare class AuthService {
     }>;
     uploadImage(userId: string, file: Express.Multer.File, type: 'avatar' | 'cover'): Promise<any>;
 }
-export {};

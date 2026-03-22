@@ -34,7 +34,14 @@ export class TodosController {
   @Post()
   async createTodo(
     @Request() req,
-    @Body() data: { title: string; day: string; dueDate?: string; priority?: string; status?: string },
+    @Body()
+    data: {
+      title: string;
+      day: string;
+      dueDate?: string;
+      priority?: string;
+      status?: string;
+    },
   ) {
     return this.todosService.createTodo(req.user.id, data);
   }
@@ -43,7 +50,16 @@ export class TodosController {
   async updateTodo(
     @Request() req,
     @Param('id') id: string,
-    @Body() data: { title?: string; isCompleted?: boolean; dueDate?: string; priority?: string; status?: string; githubIssueNumber?: number; githubRepoName?: string },
+    @Body()
+    data: {
+      title?: string;
+      isCompleted?: boolean;
+      dueDate?: string;
+      priority?: string;
+      status?: string;
+      githubIssueNumber?: number;
+      githubRepoName?: string;
+    },
   ) {
     return this.todosService.updateTodo(req.user.id, id, data);
   }
@@ -54,10 +70,7 @@ export class TodosController {
   }
 
   @Post('reorder')
-  async reorderTodos(
-    @Request() req,
-    @Body() data: { todoIds: string[] },
-  ) {
+  async reorderTodos(@Request() req, @Body() data: { todoIds: string[] }) {
     return this.todosService.reorderTodos(req.user.id, data.todoIds);
   }
 

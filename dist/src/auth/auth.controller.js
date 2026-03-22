@@ -21,6 +21,7 @@ const auth_service_1 = require("./auth.service");
 const google_guard_1 = require("./guards/google.guard");
 const jwt_guard_1 = require("./guards/jwt.guard");
 const current_user_decorator_1 = require("./decorators/current-user.decorator");
+const skip_token_refresh_decorator_1 = require("./decorators/skip-token-refresh.decorator");
 const dto_1 = require("./dto");
 let AuthController = class AuthController {
     authService;
@@ -76,6 +77,7 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('register'),
     (0, throttler_1.SkipThrottle)(),
+    (0, skip_token_refresh_decorator_1.SkipTokenRefresh)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [dto_1.RegisterDto]),
@@ -84,6 +86,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('login'),
     (0, throttler_1.SkipThrottle)(),
+    (0, skip_token_refresh_decorator_1.SkipTokenRefresh)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [dto_1.LoginDto]),
@@ -92,6 +95,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('refresh'),
     (0, throttler_1.SkipThrottle)(),
+    (0, skip_token_refresh_decorator_1.SkipTokenRefresh)(),
     __param(0, (0, common_1.Body)('refreshToken')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

@@ -221,26 +221,7 @@ export declare class GithubController {
             language: string | null;
         }[];
     }>;
-    getWorkflowRuns(user: User, repoName?: string): Promise<({
-        id: number;
-        name: string;
-        status: string;
-        conclusion: string | null;
-        branch: string;
-        event: string;
-        url: string;
-        createdAt: string;
-        updatedAt: string;
-        runNumber: number;
-        actor: {
-            login: string;
-            avatar: string;
-        };
-        headCommit: {
-            message: string;
-            author: string;
-        };
-    } & {
+    getWorkflowRuns(user: User, repoName?: string): Promise<(import("./github.service").FormattedWorkflowRun & {
         repo: string;
         repoFullName?: string;
     })[]>;

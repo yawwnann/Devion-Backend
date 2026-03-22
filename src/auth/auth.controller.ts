@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Patch,
   Body,
   Req,
@@ -14,13 +13,14 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import type { User } from '@prisma/client';
 import { SkipThrottle } from '@nestjs/throttler';
-import { AuthService } from './auth.service';
+import { AuthService, GoogleUser } from './auth.service';
 import { GoogleAuthGuard } from './guards/google.guard';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { SkipTokenRefresh } from './decorators/skip-token-refresh.decorator';
 import {
   RegisterDto,
   LoginDto,
@@ -37,18 +37,21 @@ export class AuthController {
 
   @Post('register')
   @SkipThrottle()
+  @SkipTokenRefresh()
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto.email, dto.password, dto.name);
   }
 
   @Post('login')
   @SkipThrottle()
+  @SkipTokenRefresh()
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto.email, dto.password);
   }
 
   @Post('refresh')
   @SkipThrottle()
+  @SkipTokenRefresh()
   async refresh(@Body('refreshToken') refreshToken: string) {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token required');
@@ -66,11 +69,14 @@ export class AuthController {
   @Get('google/callback')
   @SkipThrottle()
   @UseGuards(GoogleAuthGuard)
-  async googleCallback(@Req() req: any, @Res() res: Response) {
+  async googleCallback(
+    @Req() req: Request & { user: GoogleUser },
+    @Res() res: Response,
+  ) {
     const user = await this.authService.validateGoogleUser(req.user);
     const tokens = this.authService.generateTokens(user.id, user.email);
 
-    const frontendUrl = this.configService.get(
+    const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:5173',
     );
@@ -83,7 +89,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getMe(@CurrentUser() user: User) {
     // Exclude sensitive fields but include hasPassword indicator
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unused-vars
     const { googleId, password, ...safeUser } = user as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {
       ...safeUser,
       hasPassword: !!password, // boolean to indicate if user has password

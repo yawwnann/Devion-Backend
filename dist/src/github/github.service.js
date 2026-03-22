@@ -298,7 +298,15 @@ let GithubService = GithubService_1 = class GithubService {
         }
         const url = `${this.GITHUB_API}/repos/${owner}/${repo}/pulls/${prNumber}/reviews`;
         try {
-            const response = await axios_1.default.post(url, { body, event }, {
+            const reviewData = {
+                body: body || '',
+                event: event.toUpperCase(),
+            };
+            if ((event === 'APPROVE' || event === 'REQUEST_CHANGES') &&
+                !body.trim()) {
+                throw new common_1.BadRequestException('Comment is required for approve/reject');
+            }
+            const response = await axios_1.default.post(url, reviewData, {
                 headers: {
                     Authorization: `Bearer ${user.githubAccessToken}`,
                     Accept: 'application/vnd.github.v3+json',
@@ -308,10 +316,32 @@ let GithubService = GithubService_1 = class GithubService {
         }
         catch (error) {
             if (axios_1.default.isAxiosError(error)) {
-                if (error.response?.status === 422) {
-                    const message = error.response?.data?.message ||
-                        'Validation failed';
+                const status = error.response?.status;
+                const data = error.response?.data;
+                let message = data?.message || 'Request failed';
+                if (status === 422) {
+                    if (data && Array.isArray(data.errors)) {
+                        const errorDetails = data.errors
+                            .map((e) => {
+                            if (typeof e === 'string')
+                                return e;
+                            if (e && typeof e === 'object' && 'message' in e)
+                                return e.message;
+                            return JSON.stringify(e);
+                        })
+                            .join(', ');
+                        message = `${message}: ${errorDetails}`;
+                    }
+                    else if (data && typeof data.errors === 'string') {
+                        message = `${message}: ${data.errors}`;
+                    }
                     throw new common_1.BadRequestException(message);
+                }
+                if (status === 403) {
+                    throw new common_1.BadRequestException('You do not have permission to review this PR');
+                }
+                if (status === 404) {
+                    throw new common_1.BadRequestException('PR not found');
                 }
             }
             throw error;
@@ -475,7 +505,7 @@ let GithubService = GithubService_1 = class GithubService {
         if (!response.ok) {
             throw new common_1.BadRequestException('Failed to create GitHub issue. Make sure you have proper authentication.');
         }
-        const issue = await response.json();
+        const issue = (await response.json());
         return this.prisma.todo.update({
             where: { id: todoId },
             data: {
@@ -499,7 +529,7 @@ let GithubService = GithubService_1 = class GithubService {
         if (!response.ok) {
             throw new common_1.BadRequestException('Failed to fetch GitHub issue');
         }
-        const issue = await response.json();
+        const issue = (await response.json());
         const labels = issue.labels.map((l) => l.name).join(', ');
         return this.prisma.todo.update({
             where: { id: todoId },

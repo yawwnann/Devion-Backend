@@ -11,11 +11,13 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const passport_1 = require("@nestjs/passport");
 const config_1 = require("@nestjs/config");
+const core_1 = require("@nestjs/core");
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 const google_strategy_1 = require("./strategies/google.strategy");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const refresh_token_strategy_1 = require("./strategies/refresh-token.strategy");
+const refresh_token_interceptor_1 = require("./interceptors/refresh-token.interceptor");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -32,7 +34,17 @@ exports.AuthModule = AuthModule = __decorate([
             }),
         ],
         controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, google_strategy_1.GoogleStrategy, jwt_strategy_1.JwtStrategy, refresh_token_strategy_1.RefreshTokenStrategy],
+        providers: [
+            auth_service_1.AuthService,
+            google_strategy_1.GoogleStrategy,
+            jwt_strategy_1.JwtStrategy,
+            refresh_token_strategy_1.RefreshTokenStrategy,
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useFactory: (authService, reflector) => new refresh_token_interceptor_1.RefreshTokenInterceptor(authService, reflector),
+                inject: [auth_service_1.AuthService, core_1.Reflector],
+            },
+        ],
         exports: [auth_service_1.AuthService],
     })
 ], AuthModule);

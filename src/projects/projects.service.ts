@@ -23,7 +23,7 @@ export class ProjectsService {
     };
 
     // Convert startDate string to DateTime if provided and not empty
-    if (dto.startDate && dto.startDate.trim() !== "") {
+    if (dto.startDate && dto.startDate.trim() !== '') {
       data.startDate = new Date(dto.startDate);
     } else {
       // Remove empty startDate from data to avoid Prisma error
@@ -31,7 +31,7 @@ export class ProjectsService {
     }
 
     // Convert dueDate string to DateTime if provided and not empty
-    if (dto.dueDate && dto.dueDate.trim() !== "") {
+    if (dto.dueDate && dto.dueDate.trim() !== '') {
       data.dueDate = new Date(dto.dueDate);
     } else {
       // Remove empty dueDate from data to avoid Prisma error
@@ -79,17 +79,17 @@ export class ProjectsService {
     const data: any = { ...dto };
 
     // Convert startDate string to DateTime if provided and not empty
-    if (dto.startDate && dto.startDate.trim() !== "") {
+    if (dto.startDate && dto.startDate.trim() !== '') {
       data.startDate = new Date(dto.startDate);
-    } else if (dto.startDate === "") {
+    } else if (dto.startDate === '') {
       // If explicitly set to empty string, set to null
       data.startDate = null;
     }
 
     // Convert dueDate string to DateTime if provided and not empty
-    if (dto.dueDate && dto.dueDate.trim() !== "") {
+    if (dto.dueDate && dto.dueDate.trim() !== '') {
       data.dueDate = new Date(dto.dueDate);
-    } else if (dto.dueDate === "") {
+    } else if (dto.dueDate === '') {
       // If explicitly set to empty string, set to null
       data.dueDate = null;
     }

@@ -172,7 +172,7 @@ export class GithubController {
       repo,
       parseInt(number),
       user.id,
-      body.comment,
+      body.body || '',
       body.event,
     );
   }

@@ -59,13 +59,13 @@ let ProjectsService = class ProjectsService {
             ...dto,
             userId,
         };
-        if (dto.startDate && dto.startDate.trim() !== "") {
+        if (dto.startDate && dto.startDate.trim() !== '') {
             data.startDate = new Date(dto.startDate);
         }
         else {
             delete data.startDate;
         }
-        if (dto.dueDate && dto.dueDate.trim() !== "") {
+        if (dto.dueDate && dto.dueDate.trim() !== '') {
             data.dueDate = new Date(dto.dueDate);
         }
         else {
@@ -102,16 +102,16 @@ let ProjectsService = class ProjectsService {
     async update(id, userId, dto) {
         await this.findOne(id, userId);
         const data = { ...dto };
-        if (dto.startDate && dto.startDate.trim() !== "") {
+        if (dto.startDate && dto.startDate.trim() !== '') {
             data.startDate = new Date(dto.startDate);
         }
-        else if (dto.startDate === "") {
+        else if (dto.startDate === '') {
             data.startDate = null;
         }
-        if (dto.dueDate && dto.dueDate.trim() !== "") {
+        if (dto.dueDate && dto.dueDate.trim() !== '') {
             data.dueDate = new Date(dto.dueDate);
         }
-        else if (dto.dueDate === "") {
+        else if (dto.dueDate === '') {
             data.dueDate = null;
         }
         const project = await this.prisma.project.update({

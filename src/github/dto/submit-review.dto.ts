@@ -1,11 +1,11 @@
-import { IsEnum, IsString, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsString, IsOptional } from 'class-validator';
 
 export class SubmitReviewDto {
   @IsString()
-  @IsNotEmpty()
-  comment: string;
+  @IsOptional()
+  body?: string;
 
   @IsEnum(['APPROVE', 'REQUEST_CHANGES', 'COMMENT'])
-  @IsNotEmpty()
+  @IsString()
   event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT';
 }

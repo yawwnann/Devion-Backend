@@ -1,6 +1,6 @@
 import { PrismaService } from '../prisma';
 import type { GitHubIssueSearchItem, GitHubReview } from './github.types';
-interface FormattedWorkflowRun {
+export interface FormattedWorkflowRun {
     id: number;
     name: string;
     status: string;
@@ -333,4 +333,3 @@ export declare class GithubService {
         message: string;
     }>;
 }
-export {};

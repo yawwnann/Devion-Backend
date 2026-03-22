@@ -23,7 +23,7 @@ import type {
   GitHubWorkflowsResponse,
 } from './github.types';
 
-interface FormattedWorkflowRun {
+export interface FormattedWorkflowRun {
   id: number;
   name: string;
   status: string;
@@ -42,6 +42,11 @@ interface FormattedWorkflowRun {
     message: string | undefined;
     author: string | undefined;
   };
+}
+
+interface ValidationError {
+  message?: string;
+  errors?: string[] | { message?: string }[];
 }
 
 interface GitHubRepoResponse {
@@ -501,30 +506,66 @@ export class GithubService {
     const url = `${this.GITHUB_API}/repos/${owner}/${repo}/pulls/${prNumber}/reviews`;
 
     try {
-      const response = await axios.post(
-        url,
-        { body, event },
-        {
-          headers: {
-            Authorization: `Bearer ${user.githubAccessToken}`,
-            Accept: 'application/vnd.github.v3+json',
-          },
+      const reviewData = {
+        body: body || '',
+        event: event.toUpperCase(),
+      };
+
+      if (
+        (event === 'APPROVE' || event === 'REQUEST_CHANGES') &&
+        !body.trim()
+      ) {
+        throw new BadRequestException('Comment is required for approve/reject');
+      }
+
+      const response = await axios.post(url, reviewData, {
+        headers: {
+          Authorization: `Bearer ${user.githubAccessToken}`,
+          Accept: 'application/vnd.github.v3+json',
         },
-      );
+      });
+
       return response.data as GitHubReview;
     } catch (error: unknown) {
-      // Handle specific GitHub errors
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 422) {
-          const message =
-            (error.response?.data as { message?: string })?.message ||
-            'Validation failed';
-          // Common 422 errors:
-          // - Can't approve your own PR
-          // - Pull request review thread is outdated
+      if (axios.isAxiosError<ValidationError>(error)) {
+        const status = error.response?.status;
+        const data = error.response?.data as
+          | Record<string, unknown>
+          | undefined;
+
+        // Default message
+        let message = (data?.message as string) || 'Request failed';
+
+        if (status === 422) {
+          if (data && Array.isArray(data.errors)) {
+            const errorDetails = data.errors
+              .map((e: unknown) => {
+                if (typeof e === 'string') return e;
+                if (e && typeof e === 'object' && 'message' in e)
+                  return (e as Record<string, unknown>).message as string;
+                return JSON.stringify(e);
+              })
+              .join(', ');
+
+            message = `${message}: ${errorDetails}`;
+          } else if (data && typeof data.errors === 'string') {
+            message = `${message}: ${data.errors}`;
+          }
+
           throw new BadRequestException(message);
         }
+
+        if (status === 403) {
+          throw new BadRequestException(
+            'You do not have permission to review this PR',
+          );
+        }
+
+        if (status === 404) {
+          throw new BadRequestException('PR not found');
+        }
       }
+
       throw error;
     }
   }
@@ -744,7 +785,7 @@ export class GithubService {
       );
     }
 
-    const issue: GitHubIssue = await response.json();
+    const issue = (await response.json()) as unknown as GitHubIssue;
 
     // Update todo with GitHub issue info
     return this.prisma.todo.update({
@@ -779,7 +820,7 @@ export class GithubService {
       throw new BadRequestException('Failed to fetch GitHub issue');
     }
 
-    const issue: GitHubIssue = await response.json();
+    const issue = (await response.json()) as unknown as GitHubIssue;
     const labels = issue.labels.map((l) => l.name).join(', ');
 
     // Update todo

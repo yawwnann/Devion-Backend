@@ -141,7 +141,7 @@ let AuthService = class AuthService {
             return this.generateTokens(user.id, user.email);
         }
         catch (error) {
-            throw new common_1.UnauthorizedException('Invalid refresh token');
+            throw new common_1.UnauthorizedException(error, 'Invalid refresh token');
         }
     }
     async updateProfile(userId, data) {
@@ -197,16 +197,20 @@ let AuthService = class AuthService {
                     },
                 ],
             }, (error, result) => {
-                if (error)
-                    reject(error);
-                else
+                if (error) {
+                    reject(new Error(error.message));
+                }
+                else {
                     resolve(result);
+                }
             })
                 .end(file.buffer);
         });
         const updateData = type === 'avatar'
-            ? { avatar: result.secure_url }
-            : { cover: result.secure_url };
+            ?
+                { avatar: result.secure_url }
+            :
+                { cover: result.secure_url };
         const user = await this.prisma.user.update({
             where: { id: userId },
             data: updateData,

@@ -69,7 +69,7 @@ let GithubController = class GithubController {
         return this.githubService.getPRFiles(owner, repo, parseInt(number), user.id);
     }
     submitReview(user, owner, repo, number, body) {
-        return this.githubService.submitReview(owner, repo, parseInt(number), user.id, body.comment, body.event);
+        return this.githubService.submitReview(owner, repo, parseInt(number), user.id, body.body || '', body.event);
     }
     getContributions(user) {
         return this.githubService.getContributions(user.id);

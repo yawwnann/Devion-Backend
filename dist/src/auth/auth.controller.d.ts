@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import type { User } from '@prisma/client';
-import { AuthService } from './auth.service';
+import { AuthService, GoogleUser } from './auth.service';
 import { RegisterDto, LoginDto, UpdateProfileDto, ChangePasswordDto } from './dto';
 export declare class AuthController {
     private authService;
@@ -20,7 +20,9 @@ export declare class AuthController {
         refreshToken: string;
     }>;
     googleAuth(): void;
-    googleCallback(req: any, res: Response): Promise<void>;
+    googleCallback(req: Request & {
+        user: GoogleUser;
+    }, res: Response): Promise<void>;
     getMe(user: User): any;
     updateProfile(user: User, dto: UpdateProfileDto): Promise<any>;
     changePassword(user: User, dto: ChangePasswordDto): Promise<{
