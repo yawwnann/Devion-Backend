@@ -109,7 +109,7 @@ let GithubService = GithubService_1 = class GithubService {
         }
         return this.prisma.gitHubRepo.findMany({
             where: { userId },
-            orderBy: { stars: 'desc' },
+            orderBy: { githubUpdatedAt: 'desc' },
         });
     }
     async syncRepos(userId) {
@@ -156,6 +156,7 @@ let GithubService = GithubService_1 = class GithubService {
                         forks: repo.forks_count,
                         openIssues: repo.open_issues_count,
                         isPrivate: repo.private,
+                        githubUpdatedAt: new Date(repo.updated_at),
                         lastSyncedAt: now,
                     },
                 });

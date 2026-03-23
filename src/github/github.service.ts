@@ -60,6 +60,7 @@ interface GitHubRepoResponse {
   forks_count: number;
   open_issues_count: number;
   private: boolean;
+  updated_at: string;
 }
 
 interface GitHubIssue {
@@ -224,7 +225,7 @@ export class GithubService {
 
     return this.prisma.gitHubRepo.findMany({
       where: { userId },
-      orderBy: { stars: 'desc' },
+      orderBy: { githubUpdatedAt: 'desc' },
     });
   }
 
@@ -286,6 +287,7 @@ export class GithubService {
               forks: repo.forks_count,
               openIssues: repo.open_issues_count,
               isPrivate: repo.private,
+              githubUpdatedAt: new Date(repo.updated_at),
               lastSyncedAt: now,
             },
           });

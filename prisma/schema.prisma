@@ -98,12 +98,13 @@ model GitHubRepo {
   forks           Int      @default(0)
   openIssues      Int      @default(0) @map("open_issues")
   isPrivate       Boolean  @default(false) @map("is_private")
-  
+  githubUpdatedAt DateTime @map("github_updated_at")
+
   userId          String   @map("user_id")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   stats           GitHubRepoStat[]
-  
+
   lastSyncedAt    DateTime @map("last_synced_at")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
