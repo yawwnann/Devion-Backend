@@ -8,14 +8,17 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { PagesService } from './pages.service';
 import { CreatePageDto, UpdatePageDto } from './dto';
+import { PageStatus } from './enums/page-status.enum';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
-@Controller('pages')
+@Controller('documentation')
 @UseGuards(JwtAuthGuard)
 export class PagesController {
   constructor(private pagesService: PagesService) {}
@@ -28,6 +31,26 @@ export class PagesController {
   @Get()
   findAll(@CurrentUser() user: User) {
     return this.pagesService.findAll(user.id);
+  }
+
+  @Get('published')
+  @Public()
+  findPublished() {
+    return this.pagesService.findPublished();
+  }
+
+  @Get('public/:id')
+  @Public()
+  findPublicPage(@Param('id', ParseUUIDPipe) id: string) {
+    return this.pagesService.findPublicPage(id);
+  }
+
+  @Get('by-status')
+  findAllByStatus(
+    @CurrentUser() user: User,
+    @Query('status') status: PageStatus,
+  ) {
+    return this.pagesService.findAllByStatus(user.id, status);
   }
 
   @Get('favorites')

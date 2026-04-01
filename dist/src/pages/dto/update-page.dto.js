@@ -11,10 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdatePageDto = void 0;
 const class_validator_1 = require("class-validator");
+const page_status_enum_1 = require("../enums/page-status.enum");
 class UpdatePageDto {
     title;
     icon;
     cover;
+    status;
+    publishedAt;
     isArchived;
     isFavorite;
 }
@@ -34,6 +37,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdatePageDto.prototype, "cover", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(page_status_enum_1.PageStatus),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdatePageDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdatePageDto.prototype, "publishedAt", void 0);
 __decorate([
     (0, class_validator_1.IsBoolean)(),
     (0, class_validator_1.IsOptional)(),

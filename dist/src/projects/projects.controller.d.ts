@@ -52,13 +52,12 @@ export declare class ProjectsController {
         description: string | null;
     }>;
     create(user: User, dto: CreateProjectDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -66,34 +65,34 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
     findAll(user: User): Promise<({
         category: {
-            id: string;
             name: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
             color: string;
+            userId: string;
         } | null;
         payment: {
-            id: string;
             name: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
             color: string;
+            userId: string;
         } | null;
     } & {
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -101,6 +100,7 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     })[]>;
@@ -121,13 +121,12 @@ export declare class ProjectsController {
         errors: string[];
     }>;
     findOne(id: string, user: User): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -135,17 +134,17 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
     update(id: string, user: User, dto: UpdateProjectDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -153,17 +152,17 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
     remove(id: string, user: User): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -171,6 +170,7 @@ export declare class ProjectsController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;

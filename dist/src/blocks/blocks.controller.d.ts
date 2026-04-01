@@ -9,21 +9,21 @@ export declare class BlocksController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            parentBlockId: string | null;
             order: number;
-            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
+            pageId: string;
+            parentBlockId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        parentBlockId: string | null;
         order: number;
-        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
+        pageId: string;
+        parentBlockId: string | null;
     }>;
     findByPage(pageId: string, user: User): Promise<({
         children: ({
@@ -31,31 +31,31 @@ export declare class BlocksController {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                parentBlockId: string | null;
                 order: number;
-                pageId: string;
                 type: string;
                 content: import("@prisma/client/runtime/client").JsonValue;
+                pageId: string;
+                parentBlockId: string | null;
             }[];
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            parentBlockId: string | null;
             order: number;
-            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
+            pageId: string;
+            parentBlockId: string | null;
         })[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        parentBlockId: string | null;
         order: number;
-        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
+        pageId: string;
+        parentBlockId: string | null;
     })[]>;
     findOne(id: string, user: User): Promise<{
         page: {
@@ -65,52 +65,52 @@ export declare class BlocksController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            parentBlockId: string | null;
             order: number;
-            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
+            pageId: string;
+            parentBlockId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        parentBlockId: string | null;
         order: number;
-        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
+        pageId: string;
+        parentBlockId: string | null;
     }>;
     update(id: string, user: User, dto: UpdateBlockDto): Promise<{
         children: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            parentBlockId: string | null;
             order: number;
-            pageId: string;
             type: string;
             content: import("@prisma/client/runtime/client").JsonValue;
+            pageId: string;
+            parentBlockId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        parentBlockId: string | null;
         order: number;
-        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
+        pageId: string;
+        parentBlockId: string | null;
     }>;
     remove(id: string, user: User): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        parentBlockId: string | null;
         order: number;
-        pageId: string;
         type: string;
         content: import("@prisma/client/runtime/client").JsonValue;
+        pageId: string;
+        parentBlockId: string | null;
     }>;
     reorder(pageId: string, user: User, blockIds: string[]): Promise<{
         success: boolean;

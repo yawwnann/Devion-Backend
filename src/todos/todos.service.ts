@@ -44,7 +44,13 @@ export class TodosService {
   // Create new todo
   async createTodo(
     userId: string,
-    data: { title: string; day: string; dueDate?: string; priority?: string; status?: string },
+    data: {
+      title: string;
+      day: string;
+      dueDate?: string;
+      priority?: string;
+      status?: string;
+    },
   ) {
     const week = await this.getCurrentWeek(userId);
 
@@ -76,32 +82,32 @@ export class TodosService {
   async updateTodo(
     userId: string,
     todoId: string,
-    data: { 
-      title?: string; 
-      isCompleted?: boolean; 
-      dueDate?: string; 
-      priority?: string; 
-      status?: string; 
-      githubIssueNumber?: number; 
-      githubRepoName?: string; 
+    data: {
+      title?: string;
+      isCompleted?: boolean;
+      dueDate?: string;
+      priority?: string;
+      status?: string;
+      githubIssueNumber?: number;
+      githubRepoName?: string;
     },
   ) {
-    // Verify ownership
-    const todo = await this.prisma.todo.findFirst({
-      where: {
-        id: todoId,
-        week: { userId },
+    // Verify ownership - check if todo exists and belongs to user's week
+    const todo = await this.prisma.todo.findUnique({
+      where: { id: todoId },
+      include: {
+        week: {
+          select: { userId: true },
+        },
       },
-      // @ts-ignore
-      select: { id: true, status: true, isCompleted: true },
     });
 
-    if (!todo) {
-      throw new Error('Todo not found');
+    if (!todo || todo.week.userId !== userId) {
+      throw new Error(`Todo not found or access denied: ${todoId}`);
     }
 
     const updates: any = { ...data };
-    
+
     // Sync status and isCompleted
     if (data.status && data.status === 'DONE') {
       updates.isCompleted = true;
@@ -132,15 +138,17 @@ export class TodosService {
 
   // Delete todo
   async deleteTodo(userId: string, todoId: string) {
-    const todo = await this.prisma.todo.findFirst({
-      where: {
-        id: todoId,
-        week: { userId },
+    const todo = await this.prisma.todo.findUnique({
+      where: { id: todoId },
+      include: {
+        week: {
+          select: { userId: true },
+        },
       },
     });
 
-    if (!todo) {
-      throw new Error('Todo not found');
+    if (!todo || todo.week.userId !== userId) {
+      throw new Error(`Todo not found or access denied: ${todoId}`);
     }
 
     return this.prisma.todo.delete({
@@ -153,17 +161,26 @@ export class TodosService {
     userId: string,
     todoIds: string[],
   ): Promise<{ success: boolean }> {
-    // Verify all todos belong to user
+    // Verify all todos belong to user by checking week association
     const todos = await this.prisma.todo.findMany({
       where: {
-        week: { userId },
         id: { in: todoIds },
       },
-      select: { id: true },
+      include: {
+        week: {
+          select: { userId: true },
+        },
+      },
     });
 
+    // Check all todos exist and belong to the user
     if (todos.length !== todoIds.length) {
       throw new Error('Invalid todo IDs');
+    }
+
+    const allBelongToUser = todos.every((todo) => todo.week.userId === userId);
+    if (!allBelongToUser) {
+      throw new Error('Access denied to one or more todos');
     }
 
     // Update order for each todo

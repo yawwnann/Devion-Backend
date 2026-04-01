@@ -1,6 +1,8 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma';
-interface GoogleUser {
+import { LoginHistoryService } from '../login-history';
+import { Request } from 'express';
+export interface GoogleUser {
     googleId: string;
     email: string;
     name?: string;
@@ -9,22 +11,25 @@ interface GoogleUser {
 export declare class AuthService {
     private prisma;
     private jwtService;
-    constructor(prisma: PrismaService, jwtService: JwtService);
+    private loginHistoryService;
+    constructor(prisma: PrismaService, jwtService: JwtService, loginHistoryService: LoginHistoryService);
     register(email: string, password: string, name: string): Promise<{
         accessToken: string;
+        refreshToken: string;
     }>;
-    login(email: string, password: string): Promise<{
+    login(email: string, password: string, request?: Request): Promise<{
         accessToken: string;
+        refreshToken: string;
     }>;
-    validateGoogleUser(googleUser: GoogleUser): Promise<{
+    validateGoogleUser(googleUser: GoogleUser, request?: Request): Promise<{
+        name: string | null;
         id: string;
         email: string;
-        googleId: string | null;
-        name: string | null;
         bio: string | null;
         avatar: string | null;
         cover: string | null;
         password: string | null;
+        googleId: string | null;
         githubUsername: string | null;
         githubAccessToken: string | null;
         createdAt: Date;
@@ -32,7 +37,12 @@ export declare class AuthService {
     }>;
     generateTokens(userId: string, email: string): {
         accessToken: string;
+        refreshToken: string;
     };
+    refreshTokens(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+    }>;
     updateProfile(userId: string, data: {
         name?: string;
         bio?: string;
@@ -49,5 +59,21 @@ export declare class AuthService {
         pages: number;
     }>;
     uploadImage(userId: string, file: Express.Multer.File, type: 'avatar' | 'cover'): Promise<any>;
+    unlinkGoogleAccount(userId: string): Promise<{
+        message: string;
+    }>;
+    linkGoogleToExistingUser(userId: string, googleUser: GoogleUser): Promise<{
+        name: string | null;
+        id: string;
+        email: string;
+        bio: string | null;
+        avatar: string | null;
+        cover: string | null;
+        password: string | null;
+        googleId: string | null;
+        githubUsername: string | null;
+        githubAccessToken: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
 }
-export {};

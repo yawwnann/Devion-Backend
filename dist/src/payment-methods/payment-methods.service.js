@@ -55,6 +55,12 @@ let PaymentMethodsService = class PaymentMethodsService {
         if (!method || method.userId !== userId) {
             throw new common_1.NotFoundException('Payment method not found');
         }
+        const projectsUsingPayment = await this.prisma.project.count({
+            where: { paymentId: id },
+        });
+        if (projectsUsingPayment > 0) {
+            throw new common_1.ConflictException(`Cannot delete payment method. ${projectsUsingPayment} project(s) are using it.`);
+        }
         return this.prisma.paymentMethod.delete({ where: { id } });
     }
 };

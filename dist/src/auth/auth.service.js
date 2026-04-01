@@ -48,12 +48,15 @@ const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
 const cloudinary_1 = require("cloudinary");
 const prisma_1 = require("../prisma");
+const login_history_1 = require("../login-history");
 let AuthService = class AuthService {
     prisma;
     jwtService;
-    constructor(prisma, jwtService) {
+    loginHistoryService;
+    constructor(prisma, jwtService, loginHistoryService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
+        this.loginHistoryService = loginHistoryService;
         cloudinary_1.v2.config({
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
             api_key: process.env.CLOUDINARY_API_KEY,
@@ -77,47 +80,113 @@ let AuthService = class AuthService {
         });
         return this.generateTokens(user.id, user.email);
     }
-    async login(email, password) {
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-        });
-        if (!user || !user.password) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+    async login(email, password, request) {
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { email },
+            });
+            if (!user || !user.password) {
+                if (request) {
+                    await this.loginHistoryService.logLogin(null, request, false, 'User not found or no password');
+                }
+                throw new common_1.UnauthorizedException('Invalid credentials');
+            }
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                if (request) {
+                    await this.loginHistoryService.logLogin(user.id, request, false, 'Invalid password');
+                }
+                throw new common_1.UnauthorizedException('Invalid credentials');
+            }
+            if (request) {
+                await this.loginHistoryService.logLogin(user.id, request, true);
+            }
+            return this.generateTokens(user.id, user.email);
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+        catch (error) {
+            if (error instanceof common_1.UnauthorizedException) {
+                throw error;
+            }
+            throw error;
         }
-        return this.generateTokens(user.id, user.email);
     }
-    async validateGoogleUser(googleUser) {
+    async validateGoogleUser(googleUser, request) {
         const { googleId, email, name, avatar } = googleUser;
         let user = await this.prisma.user.findUnique({
             where: { googleId },
         });
         if (!user) {
-            user = await this.prisma.user.create({
-                data: {
-                    googleId,
-                    email,
-                    name,
-                    avatar,
-                },
+            user = await this.prisma.user.findUnique({
+                where: { email },
             });
+            if (user) {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: {
+                        googleId,
+                        name: name || user.name,
+                        avatar: avatar || user.avatar,
+                    },
+                });
+                if (request) {
+                    await this.loginHistoryService.logLogin(user.id, request, true);
+                }
+            }
+            else {
+                user = await this.prisma.user.create({
+                    data: {
+                        googleId,
+                        email,
+                        name,
+                        avatar,
+                    },
+                });
+                if (request) {
+                    await this.loginHistoryService.logLogin(user.id, request, true);
+                }
+            }
         }
         else {
             user = await this.prisma.user.update({
                 where: { id: user.id },
                 data: { name, avatar },
             });
+            if (request) {
+                await this.loginHistoryService.logLogin(user.id, request, true);
+            }
         }
         return user;
     }
     generateTokens(userId, email) {
         const payload = { sub: userId, email };
+        const accessToken = this.jwtService.sign(payload, {
+            expiresIn: '15m',
+        });
+        const refreshToken = this.jwtService.sign(payload, {
+            secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+            expiresIn: '7d',
+        });
         return {
-            accessToken: this.jwtService.sign(payload),
+            accessToken,
+            refreshToken,
         };
+    }
+    async refreshTokens(refreshToken) {
+        try {
+            const payload = this.jwtService.verify(refreshToken, {
+                secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+            });
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+            });
+            if (!user) {
+                throw new common_1.UnauthorizedException('User not found');
+            }
+            return this.generateTokens(user.id, user.email);
+        }
+        catch (error) {
+            throw new common_1.UnauthorizedException(error, 'Invalid refresh token');
+        }
     }
     async updateProfile(userId, data) {
         const user = await this.prisma.user.update({
@@ -172,16 +241,20 @@ let AuthService = class AuthService {
                     },
                 ],
             }, (error, result) => {
-                if (error)
-                    reject(error);
-                else
+                if (error) {
+                    reject(new Error(error.message));
+                }
+                else {
                     resolve(result);
+                }
             })
                 .end(file.buffer);
         });
         const updateData = type === 'avatar'
-            ? { avatar: result.secure_url }
-            : { cover: result.secure_url };
+            ?
+                { avatar: result.secure_url }
+            :
+                { cover: result.secure_url };
         const user = await this.prisma.user.update({
             where: { id: userId },
             data: updateData,
@@ -189,11 +262,52 @@ let AuthService = class AuthService {
         const { password, googleId, ...safeUser } = user;
         return safeUser;
     }
+    async unlinkGoogleAccount(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('User not found');
+        }
+        if (!user.password) {
+            throw new common_1.UnauthorizedException('Cannot unlink Google account. Please set a password first.');
+        }
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { googleId: null },
+        });
+        return { message: 'Google account unlinked successfully' };
+    }
+    async linkGoogleToExistingUser(userId, googleUser) {
+        const { googleId, email, name, avatar } = googleUser;
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('User not found');
+        }
+        const existingGoogleUser = await this.prisma.user.findUnique({
+            where: { googleId },
+        });
+        if (existingGoogleUser && existingGoogleUser.id !== userId) {
+            throw new common_1.ConflictException('This Google account is already linked to another user');
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                googleId,
+                name: name || user.name,
+                avatar: avatar || user.avatar,
+            },
+        });
+        return updatedUser;
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_1.PrismaService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        login_history_1.LoginHistoryService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

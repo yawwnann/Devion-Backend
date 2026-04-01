@@ -1,4 +1,25 @@
 import { PrismaService } from '../prisma';
+import type { GitHubIssueSearchItem, GitHubReview } from './github.types';
+export interface FormattedWorkflowRun {
+    id: number;
+    name: string;
+    status: string;
+    conclusion: string | null;
+    branch: string;
+    event: string;
+    url: string;
+    createdAt: string;
+    updatedAt: string;
+    runNumber: number;
+    actor: {
+        login: string | undefined;
+        avatar: string | undefined;
+    };
+    headCommit: {
+        message: string | undefined;
+        author: string | undefined;
+    };
+}
 export declare class GithubService {
     private prisma;
     private readonly logger;
@@ -15,21 +36,22 @@ export declare class GithubService {
         hasToken: boolean;
     }>;
     getRepos(userId: string): Promise<{
-        id: string;
+        url: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
+        lastSyncedAt: Date;
+        description: string | null;
         repoId: number;
         fullName: string;
-        description: string | null;
-        url: string;
         language: string | null;
         stars: number;
         forks: number;
         openIssues: number;
         isPrivate: boolean;
-        userId: string;
-        lastSyncedAt: Date;
+        githubUpdatedAt: Date;
     }[]>;
     syncRepos(userId: string): Promise<{
         synced: number;
@@ -37,19 +59,37 @@ export declare class GithubService {
     getRepoStats(userId: string, repoId: string, days?: number): Promise<{
         id: string;
         createdAt: Date;
+        commits: number;
         repoId: string;
         stars: number;
         forks: number;
-        commits: number;
         recordedAt: Date;
     }[]>;
     getLanguageStats(userId: string): Promise<{
         language: string;
         count: number;
     }[]>;
-    getPullRequests(userId: string, state?: 'open' | 'closed' | 'all'): Promise<any[]>;
+    getPullRequests(userId: string, state?: 'open' | 'closed' | 'all'): Promise<(GitHubIssueSearchItem | {
+        additions: number;
+        deletions: number;
+        changed_files: number;
+        id: number;
+        number: number;
+        title: string;
+        body: string | null;
+        state: string;
+        html_url: string;
+        repository_url: string;
+        labels: Array<{
+            name: string;
+            color: string;
+        }>;
+        created_at: string;
+        updated_at: string;
+        closed_at: string | null;
+    })[]>;
     getPRDetails(owner: string, repo: string, prNumber: number, userId: string): Promise<{
-        reviews: any;
+        reviews: GitHubReview[];
         id: number;
         number: number;
         title: string;
@@ -81,8 +121,16 @@ export declare class GithubService {
             login: string;
         }[];
     }>;
-    getPRFiles(owner: string, repo: string, prNumber: number, userId: string): Promise<any>;
-    submitReview(owner: string, repo: string, prNumber: number, userId: string, body: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT'): Promise<any>;
+    getPRFiles(owner: string, repo: string, prNumber: number, userId: string): Promise<{
+        sha: string;
+        filename: string;
+        status: string;
+        additions: number;
+        deletions: number;
+        changes: number;
+        patch?: string;
+    }[]>;
+    submitReview(owner: string, repo: string, prNumber: number, userId: string, body: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT'): Promise<GitHubReview>;
     getOverallStats(userId: string): Promise<{
         totalRepos: number;
         totalStars: number;
@@ -93,12 +141,11 @@ export declare class GithubService {
         }[];
     }>;
     linkRepoToProject(userId: string, projectId: string, githubRepo: string): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        lastSyncedAt: Date | null;
         order: string | null;
         status: string;
         information: string | null;
@@ -107,6 +154,7 @@ export declare class GithubService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
@@ -118,10 +166,10 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        lastSyncedAt: Date | null;
         order: number;
         status: string;
         dueDate: Date | null;
+        lastSyncedAt: Date | null;
         title: string;
         isCompleted: boolean;
         day: string;
@@ -136,10 +184,10 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        lastSyncedAt: Date | null;
         order: number;
         status: string;
         dueDate: Date | null;
+        lastSyncedAt: Date | null;
         title: string;
         isCompleted: boolean;
         day: string;
@@ -150,38 +198,58 @@ export declare class GithubService {
         githubLabels: string | null;
         weekId: string;
     }>;
-    fetchCommitsForIssue(userId: string, repoOwner: string, repoName: string, issueNumber: number): Promise<any>;
-    fetchCommitDetails(userId: string, repoOwner: string, repoName: string, sha: string): Promise<{
-        sha: any;
-        message: any;
-        author: any;
-        authorEmail: any;
-        authorAvatar: any;
-        url: any;
-        htmlUrl: any;
-        additions: any;
-        deletions: any;
-        committedAt: Date;
-    }>;
-    syncCommitsForTodo(userId: string, todoId: string): Promise<{
-        synced: number;
-        commits: any[];
-    }>;
-    getCommitsForTodo(userId: string, todoId: string): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        url: string;
+    fetchCommitsForIssue(userId: string, repoOwner: string, repoName: string, issueNumber: number): Promise<{
         sha: string;
         message: string;
         author: string;
-        authorEmail: string | null;
-        authorAvatar: string | null;
+        authorEmail: string;
+        authorAvatar: string | undefined;
+        url: string;
+        htmlUrl: string;
+        committedAt: Date;
+    }[]>;
+    fetchCommitDetails(userId: string, repoOwner: string, repoName: string, sha: string): Promise<{
+        sha: string;
+        message: string;
+        author: string;
+        authorEmail: string;
+        authorAvatar: string | undefined;
+        url: string;
         htmlUrl: string;
         additions: number;
         deletions: number;
         committedAt: Date;
+    }>;
+    syncCommitsForTodo(userId: string, todoId: string): Promise<{
+        synced: number;
+        commits: {
+            sha: string;
+            message: string;
+            author: string;
+            authorEmail: string;
+            authorAvatar: string | undefined;
+            url: string;
+            htmlUrl: string;
+            additions: number;
+            deletions: number;
+            committedAt: Date;
+        }[];
+    }>;
+    getCommitsForTodo(userId: string, todoId: string): Promise<{
+        url: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
         todoId: string;
+        additions: number;
+        deletions: number;
+        message: string;
+        sha: string;
+        author: string;
+        authorEmail: string | null;
+        authorAvatar: string | null;
+        htmlUrl: string;
+        committedAt: Date;
     }[]>;
     createIssue(userId: string, repoOwner: string, repoName: string, issueData: {
         title: string;
@@ -189,11 +257,11 @@ export declare class GithubService {
         labels?: string[];
         assignees?: string[];
     }): Promise<{
-        number: any;
-        url: any;
-        title: any;
-        state: any;
-        createdAt: any;
+        number: number;
+        url: string;
+        title: string;
+        state: string;
+        createdAt: string;
     }>;
     getRecentCommits(userId: string, limit?: number): Promise<{
         sha: string;
@@ -207,4 +275,62 @@ export declare class GithubService {
     }[]>;
     private getWeekStart;
     private getWeekEnd;
+    getContributions(userId: string): Promise<{
+        contributions: {
+            date: string;
+            count: number;
+            level: number;
+        }[];
+        stats: {
+            totalContributions: number;
+            activeDays: number;
+            longestStreak: number;
+            currentStreak: number;
+        };
+        isFallback: boolean;
+    } | {
+        contributions: {
+            date: string;
+            count: number;
+            level: number;
+        }[];
+        stats: {
+            totalContributions: number;
+            activeDays: number;
+            longestStreak: number;
+            currentStreak: number;
+            commits: number;
+            issues: number;
+            pullRequests: number;
+            reviews: number;
+        };
+        repositoryBreakdown: {
+            name: string;
+            commits: number;
+            additions: number;
+            deletions: number;
+            language: string | null;
+        }[];
+    }>;
+    private mapContributionLevel;
+    private getContributionsFallback;
+    private calculateStreak;
+    private calculateCurrentStreak;
+    private getRepositoryBreakdown;
+    getWorkflowRuns(userId: string, repoName?: string): Promise<(FormattedWorkflowRun & {
+        repo: string;
+        repoFullName?: string;
+    })[]>;
+    private formatWorkflowRun;
+    getWorkflows(userId: string, repoName: string): Promise<{
+        id: number;
+        name: string;
+        path: string;
+        state: string;
+        url: string;
+        badgeUrl: string;
+    }[]>;
+    triggerWorkflow(userId: string, repoName: string, workflowId: string, branch?: string): Promise<{
+        message: string;
+    }>;
 }

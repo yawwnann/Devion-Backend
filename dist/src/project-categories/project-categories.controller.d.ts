@@ -6,35 +6,35 @@ export declare class ProjectCategoriesController {
     private service;
     constructor(service: ProjectCategoriesService);
     create(user: User, dto: CreateProjectCategoryDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
     findAll(user: User): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }[]>;
     update(id: string, user: User, dto: UpdateProjectCategoryDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
     remove(id: string, user: User): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
 }
