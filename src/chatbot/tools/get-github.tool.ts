@@ -4,14 +4,16 @@ import { ToolResult } from '../chatbot.types';
 export async function getGitHubStats(
   prisma: PrismaService,
   params: { includeRepos?: boolean; includeCommits?: boolean; limit?: number },
+  userId: string,
 ): Promise<ToolResult> {
   try {
     const { includeRepos = true, includeCommits = false, limit = 5 } = params;
 
     const result: Record<string, unknown> = {};
 
-    // Get GitHub user info
+    // Get GitHub user info (filter by userId)
     const user = await prisma.user.findFirst({
+      where: { id: userId },
       select: {
         githubUsername: true,
         githubAccessToken: true,
@@ -24,6 +26,7 @@ export async function getGitHubStats(
 
     if (includeRepos && result.githubConnected) {
       const repos = await prisma.gitHubRepo.findMany({
+        where: { userId },
         orderBy: { stars: 'desc' },
         take: limit,
       });
@@ -52,12 +55,26 @@ export async function getGitHubStats(
     }
 
     if (includeCommits && result.githubConnected) {
-      const commits = await prisma.gitHubCommit.findMany({
+      // Get all commits and filter by user's todos
+      const allCommits = await prisma.gitHubCommit.findMany({
+        include: {
+          todo: {
+            select: {
+              week: {
+                select: {
+                  userId: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: { committedAt: 'desc' },
-        take: limit,
       });
 
-      result.recentCommits = commits.map((c) => ({
+      // Filter commits that belong to this user
+      const userCommits = allCommits.filter((c) => c.todo.week.userId === userId);
+
+      result.recentCommits = userCommits.slice(0, limit).map((c) => ({
         id: c.id,
         sha: c.sha,
         message: c.message,

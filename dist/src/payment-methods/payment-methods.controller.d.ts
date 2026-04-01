@@ -6,35 +6,35 @@ export declare class PaymentMethodsController {
     private service;
     constructor(service: PaymentMethodsService);
     create(user: User, dto: CreatePaymentMethodDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
     findAll(user: User): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }[]>;
     update(id: string, user: User, dto: UpdatePaymentMethodDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
     remove(id: string, user: User): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
 }

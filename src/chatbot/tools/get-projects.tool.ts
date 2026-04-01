@@ -4,11 +4,14 @@ import { ToolResult } from '../chatbot.types';
 export async function getProjects(
   prisma: PrismaService,
   params: { status?: string; limit?: number },
+  userId: string,
 ): Promise<ToolResult> {
   try {
     const { status = 'all', limit = 50 } = params;
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {
+      userId, // Filter by logged-in user
+    };
 
     if (status !== 'all') {
       where.status = status;

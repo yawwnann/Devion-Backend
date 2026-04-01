@@ -4,11 +4,14 @@ import { ToolResult } from '../chatbot.types';
 export async function getCalendarEvents(
   prisma: PrismaService,
   params: { startDate?: string; endDate?: string; eventType?: string; limit?: number },
+  userId: string,
 ): Promise<ToolResult> {
   try {
     const { eventType = 'all', limit = 50 } = params;
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = {
+      userId, // Filter by logged-in user
+    };
 
     // Handle date range
     if (params.startDate || params.endDate) {

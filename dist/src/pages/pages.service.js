@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PagesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_1 = require("../prisma");
+const page_status_enum_1 = require("./enums/page-status.enum");
 let PagesService = class PagesService {
     prisma;
     constructor(prisma) {
@@ -25,6 +26,7 @@ let PagesService = class PagesService {
             data: {
                 ...dto,
                 userId,
+                status: dto.status || page_status_enum_1.PageStatus.DRAFT,
             },
             include: { subpages: true },
         });
@@ -40,6 +42,68 @@ let PagesService = class PagesService {
                 },
             },
         });
+    }
+    async findAllByStatus(userId, status) {
+        return this.prisma.page.findMany({
+            where: { userId, status, isArchived: false, parentId: null },
+            orderBy: { updatedAt: 'desc' },
+            include: {
+                subpages: {
+                    where: { isArchived: false },
+                    orderBy: { updatedAt: 'desc' },
+                },
+            },
+        });
+    }
+    async findPublished() {
+        const result = await this.prisma.page.findMany({
+            where: {
+                status: page_status_enum_1.PageStatus.PUBLISHED,
+                isArchived: false,
+                parentId: null,
+            },
+            orderBy: { publishedAt: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
+        console.log(`[PagesService] findPublished: found ${result.length} published pages`);
+        return result;
+    }
+    async findPublicPage(id) {
+        const page = await this.prisma.page.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+                blocks: {
+                    where: { parentBlockId: null },
+                    orderBy: { order: 'asc' },
+                    include: {
+                        children: {
+                            orderBy: { order: 'asc' },
+                        },
+                    },
+                },
+            },
+        });
+        if (!page)
+            throw new common_1.NotFoundException('Page not found');
+        if (page.status !== page_status_enum_1.PageStatus.PUBLISHED) {
+            throw new common_1.ForbiddenException('This page is not published');
+        }
+        return page;
     }
     async findFavorites(userId) {
         return this.prisma.page.findMany({
@@ -80,9 +144,19 @@ let PagesService = class PagesService {
     }
     async update(id, userId, dto) {
         await this.verifyOwnership(id, userId);
+        const data = { ...dto };
+        if (dto.status === page_status_enum_1.PageStatus.PUBLISHED) {
+            const currentPage = await this.prisma.page.findUnique({
+                where: { id },
+                select: { status: true, publishedAt: true },
+            });
+            if (currentPage && currentPage.status !== page_status_enum_1.PageStatus.PUBLISHED) {
+                data.publishedAt = new Date();
+            }
+        }
         return this.prisma.page.update({
             where: { id },
-            data: dto,
+            data,
         });
     }
     async remove(id, userId) {

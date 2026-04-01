@@ -16,8 +16,10 @@ exports.PagesController = void 0;
 const common_1 = require("@nestjs/common");
 const pages_service_1 = require("./pages.service");
 const dto_1 = require("./dto");
+const page_status_enum_1 = require("./enums/page-status.enum");
 const jwt_guard_1 = require("../auth/guards/jwt.guard");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 let PagesController = class PagesController {
     pagesService;
     constructor(pagesService) {
@@ -28,6 +30,15 @@ let PagesController = class PagesController {
     }
     findAll(user) {
         return this.pagesService.findAll(user.id);
+    }
+    findPublished() {
+        return this.pagesService.findPublished();
+    }
+    findPublicPage(id) {
+        return this.pagesService.findPublicPage(id);
+    }
+    findAllByStatus(user, status) {
+        return this.pagesService.findAllByStatus(user.id, status);
     }
     findFavorites(user) {
         return this.pagesService.findFavorites(user.id);
@@ -61,6 +72,29 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], PagesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('published'),
+    (0, public_decorator_1.Public)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PagesController.prototype, "findPublished", null);
+__decorate([
+    (0, common_1.Get)('public/:id'),
+    (0, public_decorator_1.Public)(),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], PagesController.prototype, "findPublicPage", null);
+__decorate([
+    (0, common_1.Get)('by-status'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], PagesController.prototype, "findAllByStatus", null);
 __decorate([
     (0, common_1.Get)('favorites'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

@@ -15,6 +15,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { TodosModule } from './todos/todos.module';
 import { CalendarModule } from './calendar';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { LoginHistoryModule } from './login-history';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     TodosModule,
     CalendarModule,
     ChatbotModule,
+    LoginHistoryModule,
   ],
   providers: [
     {

@@ -5,35 +5,35 @@ export declare class ProjectCategoriesService {
     private prisma;
     constructor(prisma: PrismaService);
     create(userId: string, dto: CreateProjectCategoryDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
     findAll(userId: string): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }[]>;
     update(id: string, userId: string, dto: UpdateProjectCategoryDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
     remove(id: string, userId: string): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         color: string;
+        userId: string;
     }>;
 }

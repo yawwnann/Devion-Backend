@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEnum, IsDateString } from 'class-validator';
+import { PageStatus } from '../enums/page-status.enum';
 
 export class UpdatePageDto {
   @IsString()
@@ -12,6 +13,14 @@ export class UpdatePageDto {
   @IsString()
   @IsOptional()
   cover?: string;
+
+  @IsEnum(PageStatus)
+  @IsOptional()
+  status?: PageStatus;
+
+  @IsDateString()
+  @IsOptional()
+  publishedAt?: string;
 
   @IsBoolean()
   @IsOptional()

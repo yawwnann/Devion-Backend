@@ -9,6 +9,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { RefreshTokenInterceptor } from './interceptors/refresh-token.interceptor';
+import { LoginHistoryModule } from '../login-history/login-history.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RefreshTokenInterceptor } from './interceptors/refresh-token.intercepto
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '15m') },
       }),
     }),
+    LoginHistoryModule,
   ],
   controllers: [AuthController],
   providers: [

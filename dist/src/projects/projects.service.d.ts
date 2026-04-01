@@ -6,13 +6,12 @@ export declare class ProjectsService {
     private calendarService;
     constructor(prisma: PrismaService, calendarService: CalendarService);
     create(userId: string, dto: CreateProjectDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -20,34 +19,34 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
     findAll(userId: string): Promise<({
         category: {
-            id: string;
             name: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
             color: string;
+            userId: string;
         } | null;
         payment: {
-            id: string;
             name: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
             color: string;
+            userId: string;
         } | null;
     } & {
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -55,17 +54,17 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     })[]>;
     findOne(id: string, userId: string): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -73,17 +72,17 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
     update(id: string, userId: string, dto: UpdateProjectDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -91,17 +90,17 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
     remove(id: string, userId: string): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -109,6 +108,7 @@ export declare class ProjectsService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;

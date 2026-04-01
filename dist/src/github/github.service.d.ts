@@ -37,21 +37,21 @@ export declare class GithubService {
     }>;
     getRepos(userId: string): Promise<{
         url: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
+        lastSyncedAt: Date;
+        description: string | null;
         repoId: number;
         fullName: string;
-        description: string | null;
         language: string | null;
         stars: number;
         forks: number;
         openIssues: number;
         isPrivate: boolean;
         githubUpdatedAt: Date;
-        lastSyncedAt: Date;
     }[]>;
     syncRepos(userId: string): Promise<{
         synced: number;
@@ -59,10 +59,10 @@ export declare class GithubService {
     getRepoStats(userId: string, repoId: string, days?: number): Promise<{
         id: string;
         createdAt: Date;
+        commits: number;
         repoId: string;
         stars: number;
         forks: number;
-        commits: number;
         recordedAt: Date;
     }[]>;
     getLanguageStats(userId: string): Promise<{
@@ -141,13 +141,12 @@ export declare class GithubService {
         }[];
     }>;
     linkRepoToProject(userId: string, projectId: string, githubRepo: string): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -155,6 +154,7 @@ export declare class GithubService {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
@@ -166,13 +166,13 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        day: string;
-        title: string;
         order: number;
-        lastSyncedAt: Date | null;
         status: string;
         dueDate: Date | null;
+        lastSyncedAt: Date | null;
+        title: string;
         isCompleted: boolean;
+        day: string;
         priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
@@ -184,13 +184,13 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        day: string;
-        title: string;
         order: number;
-        lastSyncedAt: Date | null;
         status: string;
         dueDate: Date | null;
+        lastSyncedAt: Date | null;
+        title: string;
         isCompleted: boolean;
+        day: string;
         priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
@@ -240,6 +240,7 @@ export declare class GithubService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        todoId: string;
         additions: number;
         deletions: number;
         message: string;
@@ -249,7 +250,6 @@ export declare class GithubService {
         authorAvatar: string | null;
         htmlUrl: string;
         committedAt: Date;
-        todoId: string;
     }[]>;
     createIssue(userId: string, repoOwner: string, repoName: string, issueData: {
         title: string;

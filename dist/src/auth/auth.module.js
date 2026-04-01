@@ -18,6 +18,7 @@ const google_strategy_1 = require("./strategies/google.strategy");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const refresh_token_strategy_1 = require("./strategies/refresh-token.strategy");
 const refresh_token_interceptor_1 = require("./interceptors/refresh-token.interceptor");
+const login_history_module_1 = require("../login-history/login-history.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -32,6 +33,7 @@ exports.AuthModule = AuthModule = __decorate([
                     signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '15m') },
                 }),
             }),
+            login_history_module_1.LoginHistoryModule,
         ],
         controllers: [auth_controller_1.AuthController],
         providers: [

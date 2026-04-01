@@ -24,6 +24,7 @@ const payment_methods_module_1 = require("./payment-methods/payment-methods.modu
 const todos_module_1 = require("./todos/todos.module");
 const calendar_1 = require("./calendar");
 const chatbot_module_1 = require("./chatbot/chatbot.module");
+const login_history_1 = require("./login-history");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -56,6 +57,7 @@ exports.AppModule = AppModule = __decorate([
             todos_module_1.TodosModule,
             calendar_1.CalendarModule,
             chatbot_module_1.ChatbotModule,
+            login_history_1.LoginHistoryModule,
         ],
         providers: [
             {

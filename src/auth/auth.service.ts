@@ -7,6 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { v2 as cloudinary } from 'cloudinary';
 import { PrismaService } from '../prisma';
+import { LoginHistoryService } from '../login-history';
+import { Request } from 'express';
 
 export interface GoogleUser {
   googleId: string;
@@ -20,6 +22,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private loginHistoryService: LoginHistoryService,
   ) {
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -53,47 +56,107 @@ export class AuthService {
     return this.generateTokens(user.id, user.email);
   }
 
-  async login(email: string, password: string) {
-    // Find user
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+  async login(email: string, password: string, request?: Request) {
+    try {
+      // Find user
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+      });
 
-    if (!user || !user.password) {
-      throw new UnauthorizedException('Invalid credentials');
+      if (!user || !user.password) {
+        if (request) {
+          await this.loginHistoryService.logLogin(
+            null,
+            request,
+            false,
+            'User not found or no password',
+          );
+        }
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        if (request) {
+          await this.loginHistoryService.logLogin(
+            user.id,
+            request,
+            false,
+            'Invalid password',
+          );
+        }
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Log successful login
+      if (request) {
+        await this.loginHistoryService.logLogin(user.id, request, true);
+      }
+
+      return this.generateTokens(user.id, user.email);
+    } catch (error) {
+      // Re-throw if already UnauthorizedException
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw error;
     }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    return this.generateTokens(user.id, user.email);
   }
 
-  async validateGoogleUser(googleUser: GoogleUser) {
+  async validateGoogleUser(googleUser: GoogleUser, request?: Request) {
     const { googleId, email, name, avatar } = googleUser;
 
+    // First, check if Google ID already exists
     let user = await this.prisma.user.findUnique({
       where: { googleId },
     });
 
     if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          googleId,
-          email,
-          name,
-          avatar,
-        },
+      // Check if email exists (for account linking)
+      user = await this.prisma.user.findUnique({
+        where: { email },
       });
+
+      if (user) {
+        // Link Google account to existing user
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId,
+            name: name || user.name,
+            avatar: avatar || user.avatar,
+          },
+        });
+        // Log successful account linking
+        if (request) {
+          await this.loginHistoryService.logLogin(user.id, request, true);
+        }
+      } else {
+        // Create new user
+        user = await this.prisma.user.create({
+          data: {
+            googleId,
+            email,
+            name,
+            avatar,
+          },
+        });
+        // Log new user registration via Google
+        if (request) {
+          await this.loginHistoryService.logLogin(user.id, request, true);
+        }
+      }
     } else {
       // Update user info on each login
       user = await this.prisma.user.update({
         where: { id: user.id },
         data: { name, avatar },
       });
+      // Log successful Google login
+      if (request) {
+        await this.loginHistoryService.logLogin(user.id, request, true);
+      }
     }
 
     return user;
@@ -256,5 +319,66 @@ export class AuthService {
     const { password, googleId, ...safeUser } = user as any;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return safeUser;
+  }
+
+  async unlinkGoogleAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Check if user has password (can't unlink if no password)
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'Cannot unlink Google account. Please set a password first.',
+      );
+    }
+
+    // Unlink Google account
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { googleId: null },
+    });
+
+    return { message: 'Google account unlinked successfully' };
+  }
+
+  async linkGoogleToExistingUser(userId: string, googleUser: GoogleUser) {
+    const { googleId, email, name, avatar } = googleUser;
+
+    // Verify user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Check if Google ID is already linked to another account
+    const existingGoogleUser = await this.prisma.user.findUnique({
+      where: { googleId },
+    });
+
+    if (existingGoogleUser && existingGoogleUser.id !== userId) {
+      throw new ConflictException(
+        'This Google account is already linked to another user',
+      );
+    }
+
+    // Link Google account
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        googleId,
+        name: name || user.name,
+        avatar: avatar || user.avatar,
+      },
+    });
+
+    return updatedUser;
   }
 }

@@ -15,21 +15,21 @@ export declare class GithubController {
     }>;
     getRepos(user: User): Promise<{
         url: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
+        lastSyncedAt: Date;
+        description: string | null;
         repoId: number;
         fullName: string;
-        description: string | null;
         language: string | null;
         stars: number;
         forks: number;
         openIssues: number;
         isPrivate: boolean;
         githubUpdatedAt: Date;
-        lastSyncedAt: Date;
     }[]>;
     syncRepos(user: User): Promise<{
         synced: number;
@@ -37,20 +37,19 @@ export declare class GithubController {
     getRepoStats(user: User, repoId: string, days?: string): Promise<{
         id: string;
         createdAt: Date;
+        commits: number;
         repoId: string;
         stars: number;
         forks: number;
-        commits: number;
         recordedAt: Date;
     }[]>;
     linkRepo(user: User, dto: LinkRepoDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
         order: string | null;
-        lastSyncedAt: Date | null;
         status: string;
         information: string | null;
         orderNum: number;
@@ -58,6 +57,7 @@ export declare class GithubController {
         startDate: Date | null;
         githubRepo: string | null;
         githubUrl: string | null;
+        lastSyncedAt: Date | null;
         categoryId: string | null;
         paymentId: string | null;
     }>;
@@ -69,13 +69,13 @@ export declare class GithubController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        day: string;
-        title: string;
         order: number;
-        lastSyncedAt: Date | null;
         status: string;
         dueDate: Date | null;
+        lastSyncedAt: Date | null;
+        title: string;
         isCompleted: boolean;
+        day: string;
         priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
@@ -87,13 +87,13 @@ export declare class GithubController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        day: string;
-        title: string;
         order: number;
-        lastSyncedAt: Date | null;
         status: string;
         dueDate: Date | null;
+        lastSyncedAt: Date | null;
+        title: string;
         isCompleted: boolean;
+        day: string;
         priority: string;
         githubIssueNumber: number | null;
         githubIssueUrl: string | null;
