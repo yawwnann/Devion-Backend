@@ -10,11 +10,13 @@ exports.GithubModule = void 0;
 const common_1 = require("@nestjs/common");
 const github_controller_1 = require("./github.controller");
 const github_service_1 = require("./github.service");
+const notifications_1 = require("../notifications");
 let GithubModule = class GithubModule {
 };
 exports.GithubModule = GithubModule;
 exports.GithubModule = GithubModule = __decorate([
     (0, common_1.Module)({
+        imports: [notifications_1.NotificationsModule],
         controllers: [github_controller_1.GithubController],
         providers: [github_service_1.GithubService],
         exports: [github_service_1.GithubService],

@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma';
+import { NotificationsService } from '../notifications';
 import { CreateEventDto, UpdateEventDto } from './dto';
 
 @Injectable()
 export class CalendarService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(userId: string, createEventDto: CreateEventDto) {
-    return this.prisma.calendarEvent.create({
+    const event = await this.prisma.calendarEvent.create({
       data: {
         title: createEventDto.title,
         description: createEventDto.description,
@@ -31,6 +35,17 @@ export class CalendarService {
         todo: true,
       },
     });
+
+    // Send notification for all-day events or events starting soon
+    if (createEventDto.allDay) {
+      await this.notificationsService.allDayEvent(
+        userId,
+        event.title,
+        event.id,
+      );
+    }
+
+    return event;
   }
 
   async findAll(userId: string, startDate?: string, endDate?: string) {

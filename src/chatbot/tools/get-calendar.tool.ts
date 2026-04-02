@@ -3,7 +3,12 @@ import { ToolResult } from '../chatbot.types';
 
 export async function getCalendarEvents(
   prisma: PrismaService,
-  params: { startDate?: string; endDate?: string; eventType?: string; limit?: number },
+  params: {
+    startDate?: string;
+    endDate?: string;
+    eventType?: string;
+    limit?: number;
+  },
   userId: string,
 ): Promise<ToolResult> {
   try {
@@ -57,7 +62,10 @@ export async function getCalendarEvents(
     return {
       success: false,
       data: [],
-      error: error instanceof Error ? error.message : 'Failed to get calendar events',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to get calendar events',
     };
   }
 }

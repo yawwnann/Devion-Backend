@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { CalendarService } from '../calendar';
+import { NotificationsService } from '../notifications';
 export declare class ProjectsService {
     private prisma;
     private calendarService;
-    constructor(prisma: PrismaService, calendarService: CalendarService);
+    private notificationsService;
+    constructor(prisma: PrismaService, calendarService: CalendarService, notificationsService: NotificationsService);
     create(userId: string, dto: CreateProjectDto): Promise<{
         name: string;
         id: string;

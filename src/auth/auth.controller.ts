@@ -179,7 +179,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getMe(@CurrentUser() user: User) {
     // Exclude sensitive fields but include hasPassword and hasGoogleLinked indicators
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { googleId, password, ...safeUser } = user as any;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return {

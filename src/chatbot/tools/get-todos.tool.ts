@@ -7,7 +7,12 @@ export async function getTodos(
   userId: string,
 ): Promise<ToolResult> {
   try {
-    const { status = 'pending', priority = 'all', day = 'all', limit = 50 } = params;
+    const {
+      status = 'pending',
+      priority = 'all',
+      day = 'all',
+      limit = 50,
+    } = params;
 
     const where: Record<string, unknown> = {
       userId, // Filter by logged-in user

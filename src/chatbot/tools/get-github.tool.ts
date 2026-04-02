@@ -46,12 +46,15 @@ export async function getGitHubStats(
       // Summary stats
       result.totalRepos = repos.length;
       result.totalStars = repos.reduce((sum, r) => sum + r.stars, 0);
-      result.languageStats = repos.reduce((acc, r) => {
-        if (r.language) {
-          acc[r.language] = (acc[r.language] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
+      result.languageStats = repos.reduce(
+        (acc, r) => {
+          if (r.language) {
+            acc[r.language] = (acc[r.language] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
     }
 
     if (includeCommits && result.githubConnected) {
@@ -72,7 +75,9 @@ export async function getGitHubStats(
       });
 
       // Filter commits that belong to this user
-      const userCommits = allCommits.filter((c) => c.todo.week.userId === userId);
+      const userCommits = allCommits.filter(
+        (c) => c.todo.week.userId === userId,
+      );
 
       result.recentCommits = userCommits.slice(0, limit).map((c) => ({
         id: c.id,
@@ -94,7 +99,8 @@ export async function getGitHubStats(
     return {
       success: false,
       data: {},
-      error: error instanceof Error ? error.message : 'Failed to get GitHub stats',
+      error:
+        error instanceof Error ? error.message : 'Failed to get GitHub stats',
     };
   }
 }

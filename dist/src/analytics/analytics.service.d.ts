@@ -1,5 +1,22 @@
 import { PrismaService } from '../prisma';
 import { CreateEventDto } from './dto';
+export interface ProductivityStats {
+    currentStreak: number;
+    longestStreak: number;
+    lastCompletedAt: Date | null;
+    todayCompleted: number;
+    todayTotal: number;
+    weekCompleted: number;
+    weekTotal: number;
+    completionRate: number;
+    totalCompleted: number;
+    totalTodos: number;
+    dailyActivity: Array<{
+        date: string;
+        completed: number;
+        total: number;
+    }>;
+}
 export declare class AnalyticsService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -25,4 +42,8 @@ export declare class AnalyticsService {
         date: string;
         count: number;
     }[]>;
+    getProductivity(userId: string): Promise<ProductivityStats>;
+    private calculateStreaks;
+    private getStartOfWeek;
+    private getDailyTodoActivity;
 }

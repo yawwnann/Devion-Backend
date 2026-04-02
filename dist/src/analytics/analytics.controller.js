@@ -35,6 +35,9 @@ let AnalyticsController = class AnalyticsController {
     getDailyActivity(user, days) {
         return this.analyticsService.getDailyActivity(user.id, days ? parseInt(days) : 30);
     }
+    getProductivity(user) {
+        return this.analyticsService.getProductivity(user.id);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -70,6 +73,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], AnalyticsController.prototype, "getDailyActivity", null);
+__decorate([
+    (0, common_1.Get)('productivity'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AnalyticsController.prototype, "getProductivity", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, common_1.Controller)('analytics'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),

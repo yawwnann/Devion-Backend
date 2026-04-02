@@ -8,60 +8,100 @@ datasource db {
 
 // ==================== USER ====================
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  name          String?
-  bio           String?  // User bio/description
-  avatar        String?  // Cloudinary URL
-  cover         String?  // Profile cover image
-  password      String?  // hashed password (null for OAuth users)
-  googleId      String?  @unique @map("google_id") // nullable for email/password users
-  githubUsername String? @map("github_username")
-  githubAccessToken String? @map("github_access_token") // GitHub personal access token for API
-  
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                String           @id @default(uuid())
+  email             String           @unique
+  name              String?
+  bio               String? // User bio/description
+  avatar            String? // Cloudinary URL
+  cover             String? // Profile cover image
+  password          String? // hashed password (null for OAuth users)
+  googleId          String?          @unique @map("google_id") // nullable for email/password users
+  githubUsername    String?          @map("github_username")
+  githubAccessToken String?          @map("github_access_token")
+  preferences       UserPreferences?
 
-  pages           Page[]
-  githubRepos     GitHubRepo[]
-  analyticsEvents AnalyticsEvent[]
-  projects        Project[]
-  categories      ProjectCategory[]
-  paymentMethods  PaymentMethod[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  pages               Page[]
+  githubRepos         GitHubRepo[]
+  analyticsEvents     AnalyticsEvent[]
+  projects            Project[]
+  categories          ProjectCategory[]
+  paymentMethods      PaymentMethod[]
   projectPageSettings ProjectPageSettings?
-  todoWeeks       TodoWeek[]
-  todoPageSettings TodoPageSettings?
-  calendarEvents  CalendarEvent[]
-  loginHistories  LoginHistory[]
+  todoWeeks           TodoWeek[]
+  todoPageSettings    TodoPageSettings?
+  calendarEvents      CalendarEvent[]
+  loginHistories      LoginHistory[]
+  notifications       Notification[]
 
   @@map("users")
 }
 
+// ==================== USER PREFERENCES ====================
+
+model UserPreferences {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  theme    String @default("system") // light, dark, system
+  language String @default("id") // en, id, dll
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+}
+
 // ==================== LOGIN HISTORY ====================
 model LoginHistory {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  ipAddress     String   @map("ip_address")
-  userAgent     String   @map("user_agent")
-  browser       String?
-  os            String?
-  device        String?
-  country       String?
-  city          String?
-  region        String?
-  timezone      String?
-  
-  isSuccess     Boolean  @default(true) @map("is_success")
-  failureReason String?  @map("failure_reason")
-  
-  createdAt     DateTime @default(now()) @map("created_at")
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipAddress String  @map("ip_address")
+  userAgent String  @map("user_agent")
+  browser   String?
+  os        String?
+  device    String?
+  country   String?
+  city      String?
+  region    String?
+  timezone  String?
+
+  isSuccess     Boolean @default(true) @map("is_success")
+  failureReason String? @map("failure_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([userId, createdAt])
   @@index([ipAddress])
   @@map("login_histories")
+}
+
+// ==================== NOTIFICATION ====================
+model Notification {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    String // github, project, todo, security, calendar, system
+  title   String
+  message String
+  data    Json   @default("{}") // Additional metadata
+
+  isRead Boolean   @default(false) @map("is_read")
+  readAt DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
 
 // ==================== PAGE STATUS ENUM ====================
@@ -75,24 +115,24 @@ enum PageStatus {
 model Page {
   id          String     @id @default(uuid())
   title       String     @default("Untitled")
-  icon        String?    // emoji or image URL
-  cover       String?    // Cloudinary URL
+  icon        String? // emoji or image URL
+  cover       String? // Cloudinary URL
   status      PageStatus @default(DRAFT)
   publishedAt DateTime?  @map("published_at")
   isArchived  Boolean    @default(false) @map("is_archived")
   isFavorite  Boolean    @default(false) @map("is_favorite")
 
-  userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  parentId    String?  @map("parent_id")
-  parent      Page?    @relation("PageToSubpages", fields: [parentId], references: [id], onDelete: Cascade)
-  subpages    Page[]   @relation("PageToSubpages")
+  parentId String? @map("parent_id")
+  parent   Page?   @relation("PageToSubpages", fields: [parentId], references: [id], onDelete: Cascade)
+  subpages Page[]  @relation("PageToSubpages")
 
-  blocks      Block[]
+  blocks Block[]
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([parentId])
@@ -102,20 +142,20 @@ model Page {
 
 // ==================== BLOCK ====================
 model Block {
-  id            String   @id @default(uuid())
-  type          String   // text, heading, todo, code, image, embed, chart, etc.
-  content       Json     @default("{}") // flexible JSON content
-  order         Int      @default(0)    // position within parent
-  
-  pageId        String   @map("page_id")
-  page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  
-  parentBlockId String?  @map("parent_block_id")
-  parentBlock   Block?   @relation("BlockToChildren", fields: [parentBlockId], references: [id], onDelete: Cascade)
-  children      Block[]  @relation("BlockToChildren")
-  
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id      String @id @default(uuid())
+  type    String // text, heading, todo, code, image, embed, chart, etc.
+  content Json   @default("{}") // flexible JSON content
+  order   Int    @default(0) // position within parent
+
+  pageId String @map("page_id")
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  parentBlockId String? @map("parent_block_id")
+  parentBlock   Block?  @relation("BlockToChildren", fields: [parentBlockId], references: [id], onDelete: Cascade)
+  children      Block[] @relation("BlockToChildren")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([pageId])
   @@index([parentBlockId])
@@ -138,14 +178,14 @@ model GitHubRepo {
   isPrivate       Boolean  @default(false) @map("is_private")
   githubUpdatedAt DateTime @map("github_updated_at")
 
-  userId          String   @map("user_id")
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  stats           GitHubRepoStat[]
+  stats GitHubRepoStat[]
 
-  lastSyncedAt    DateTime @map("last_synced_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  lastSyncedAt DateTime @map("last_synced_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, repoId])
   @@index([userId])
@@ -153,16 +193,16 @@ model GitHubRepo {
 }
 
 model GitHubRepoStat {
-  id          String   @id @default(uuid())
-  repoId      String   @map("repo_id")
-  repo        GitHubRepo @relation(fields: [repoId], references: [id], onDelete: Cascade)
-  
-  stars       Int      @default(0)
-  forks       Int      @default(0)
-  commits     Int      @default(0)
-  
-  recordedAt  DateTime @map("recorded_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id     String     @id @default(uuid())
+  repoId String     @map("repo_id")
+  repo   GitHubRepo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  stars   Int @default(0)
+  forks   Int @default(0)
+  commits Int @default(0)
+
+  recordedAt DateTime @map("recorded_at")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([repoId])
   @@index([repoId, recordedAt])
@@ -171,14 +211,14 @@ model GitHubRepoStat {
 
 // ==================== ANALYTICS ====================
 model AnalyticsEvent {
-  id          String   @id @default(uuid())
-  eventType   String   @map("event_type") // page_view, block_created, etc.
-  eventData   Json     @default("{}") @map("event_data")
-  
-  userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String @id @default(uuid())
+  eventType String @map("event_type") // page_view, block_created, etc.
+  eventData Json   @default("{}") @map("event_data")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([eventType])
@@ -186,7 +226,6 @@ model AnalyticsEvent {
   @@index([eventType, createdAt])
   @@map("analytics_events")
 }
-
 
 // ==================== PROJECT MANAGEMENT ====================
 model ProjectCategory {
@@ -220,35 +259,35 @@ model PaymentMethod {
 }
 
 model Project {
-  id          String           @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
-  order       String?          // Client/Order name
-  status      String           @default("TODO") // TODO, IN_PROGRESS, DONE
-  information String?          // Additional notes
-  orderNum    Int              @default(autoincrement()) @map("order_num")
-  
+  order       String? // Client/Order name
+  status      String  @default("TODO") // TODO, IN_PROGRESS, DONE
+  information String? // Additional notes
+  orderNum    Int     @default(autoincrement()) @map("order_num")
+
   // Dates
-  dueDate     DateTime?        @map("due_date")
-  startDate   DateTime?        @map("start_date")
-  
+  dueDate   DateTime? @map("due_date")
+  startDate DateTime? @map("start_date")
+
   // GitHub Integration
-  githubRepo  String?          @map("github_repo") // owner/repo format
-  githubUrl   String?          @map("github_url")  // Full GitHub URL
-  lastSyncedAt DateTime?       @map("last_synced_at")
-  
-  categoryId  String?          @map("category_id")
-  category    ProjectCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  
-  paymentId   String?          @map("payment_id")
-  payment     PaymentMethod?   @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  
-  userId      String           @map("user_id")
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  githubRepo   String?   @map("github_repo") // owner/repo format
+  githubUrl    String?   @map("github_url") // Full GitHub URL
+  lastSyncedAt DateTime? @map("last_synced_at")
+
+  categoryId String?          @map("category_id")
+  category   ProjectCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  paymentId String?        @map("payment_id")
+  payment   PaymentMethod? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   calendarEvents CalendarEvent[]
-  
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([userId, status])
@@ -259,17 +298,17 @@ model Project {
 
 // Project Page Settings (cover, title, description)
 model ProjectPageSettings {
-  id          String   @id @default(uuid())
-  cover       String?  // Cloudinary URL for cover image
-  icon        String?  // Emoji or icon
-  title       String   @default("DATA PROJECT")
+  id          String  @id @default(uuid())
+  cover       String? // Cloudinary URL for cover image
+  icon        String? // Emoji or icon
+  title       String  @default("DATA PROJECT")
   description String?
-  
-  userId      String   @unique @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("project_page_settings")
 }
@@ -278,13 +317,13 @@ model ProjectPageSettings {
 model TodoWeek {
   id        String   @id @default(uuid())
   weekStart DateTime @map("week_start") // Start of the week (Monday)
-  weekEnd   DateTime @map("week_end")   // End of the week (Sunday)
-  
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  todos     Todo[]
-  
+  weekEnd   DateTime @map("week_end") // End of the week (Sunday)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  todos Todo[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -294,30 +333,30 @@ model TodoWeek {
 }
 
 model Todo {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  isCompleted Boolean  @default(false) @map("is_completed")
-  day         String   // Mon, Tue, Wed, Thu, Fri, Sat, Sun
-  order       Int      @default(0) // Position within the day
-  priority    String   @default("MEDIUM") // HIGH, MEDIUM, LOW
-  status      String   @default("TODO") // TODO, SCHEDULED, IN_PROGRESS, DONE
+  isCompleted Boolean   @default(false) @map("is_completed")
+  day         String // Mon, Tue, Wed, Thu, Fri, Sat, Sun
+  order       Int       @default(0) // Position within the day
+  priority    String    @default("MEDIUM") // HIGH, MEDIUM, LOW
+  status      String    @default("TODO") // TODO, SCHEDULED, IN_PROGRESS, DONE
   dueDate     DateTime? @map("due_date") // Optional due date for calendar integration
-  
+
   // GitHub Integration
-  githubIssueNumber Int?     @map("github_issue_number")
-  githubIssueUrl    String?  @map("github_issue_url")
-  githubRepoName    String?  @map("github_repo_name") // owner/repo
-  githubLabels      String?  @map("github_labels") // JSON string
+  githubIssueNumber Int?      @map("github_issue_number")
+  githubIssueUrl    String?   @map("github_issue_url")
+  githubRepoName    String?   @map("github_repo_name") // owner/repo
+  githubLabels      String?   @map("github_labels") // JSON string
   lastSyncedAt      DateTime? @map("last_synced_at")
-  
-  weekId      String   @map("week_id")
-  week        TodoWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
-  
+
+  weekId String   @map("week_id")
+  week   TodoWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
   calendarEvents CalendarEvent[]
   commits        GitHubCommit[]
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([weekId])
   @@index([weekId, day, order])
@@ -329,21 +368,21 @@ model Todo {
 model GitHubCommit {
   id           String   @id @default(uuid())
   sha          String   @unique // Git commit SHA
-  message      String   // Commit message
-  author       String   // Author name
+  message      String // Commit message
+  author       String // Author name
   authorEmail  String?  @map("author_email")
   authorAvatar String?  @map("author_avatar") // GitHub avatar URL
-  url          String   // GitHub commit URL
+  url          String // GitHub commit URL
   htmlUrl      String   @map("html_url") // Browser URL
   additions    Int      @default(0) // Lines added
   deletions    Int      @default(0) // Lines deleted
   committedAt  DateTime @map("committed_at") // When commit was made
-  
-  todoId       String   @map("todo_id")
-  todo         Todo     @relation(fields: [todoId], references: [id], onDelete: Cascade)
-  
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  todoId String @map("todo_id")
+  todo   Todo   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([todoId])
   @@index([todoId, committedAt])
@@ -351,17 +390,17 @@ model GitHubCommit {
 }
 
 model TodoPageSettings {
-  id          String   @id @default(uuid())
-  cover       String?  // Cloudinary URL for cover image
-  icon        String?  // Emoji or icon
-  title       String   @default("Weekly To-do List")
+  id          String  @id @default(uuid())
+  cover       String? // Cloudinary URL for cover image
+  icon        String? // Emoji or icon
+  title       String  @default("Weekly To-do List")
   description String?
-  
-  userId      String   @unique @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("todo_page_settings")
 }
@@ -375,26 +414,26 @@ model CalendarEvent {
   endDate     DateTime @map("end_date")
   allDay      Boolean  @default(false) @map("all_day")
   color       String   @default("blue") // Event color
-  
+
   // Event type and source
-  eventType   String   @map("event_type") // project, todo, github_issue, custom
-  
+  eventType String @map("event_type") // project, todo, github_issue, custom
+
   // Relations to source entities
-  projectId   String?  @map("project_id")
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  todoId      String?  @map("todo_id")
-  todo        Todo?    @relation(fields: [todoId], references: [id], onDelete: Cascade)
-  
+  projectId String?  @map("project_id")
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  todoId String? @map("todo_id")
+  todo   Todo?   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+
   // GitHub Issue reference (no direct relation)
   githubIssueNumber Int?    @map("github_issue_number")
   githubRepoName    String? @map("github_repo_name")
-  
-  userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([userId, startDate])

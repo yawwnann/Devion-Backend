@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications';
 
 @Injectable()
 export class TodosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   // Get or create current week
   async getCurrentWeek(userId: string) {
@@ -130,10 +134,18 @@ export class TodosService {
       updates.dueDate = new Date(data.dueDate);
     }
 
-    return this.prisma.todo.update({
+    const updatedTodo = await this.prisma.todo.update({
       where: { id: todoId },
       data: updates,
     });
+
+    // Send notification if todo is completed
+    if (data.isCompleted === true && !todo.isCompleted) {
+      // Optional: You could add a completion celebration notification
+      // await this.notificationsService.sendTodoNotification(...)
+    }
+
+    return updatedTodo;
   }
 
   // Delete todo

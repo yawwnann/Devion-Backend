@@ -47,12 +47,15 @@ const common_1 = require("@nestjs/common");
 const XLSX = __importStar(require("xlsx"));
 const prisma_1 = require("../prisma");
 const calendar_1 = require("../calendar");
+const notifications_1 = require("../notifications");
 let ProjectsService = class ProjectsService {
     prisma;
     calendarService;
-    constructor(prisma, calendarService) {
+    notificationsService;
+    constructor(prisma, calendarService, notificationsService) {
         this.prisma = prisma;
         this.calendarService = calendarService;
+        this.notificationsService = notificationsService;
     }
     async create(userId, dto) {
         const data = {
@@ -101,6 +104,12 @@ let ProjectsService = class ProjectsService {
     }
     async update(id, userId, dto) {
         await this.findOne(id, userId);
+        const currentProject = await this.prisma.project.findUnique({
+            where: { id },
+        });
+        if (!currentProject) {
+            throw new common_1.NotFoundException('Project not found');
+        }
         const data = { ...dto };
         if (dto.startDate && dto.startDate.trim() !== '') {
             data.startDate = new Date(dto.startDate);
@@ -118,6 +127,9 @@ let ProjectsService = class ProjectsService {
             where: { id },
             data,
         });
+        if (dto.status && dto.status !== currentProject.status) {
+            await this.notificationsService.projectStatusChanged(userId, project.name, project.id, currentProject.status, dto.status);
+        }
         await this.calendarService.syncFromProjects(userId);
         return project;
     }
@@ -385,6 +397,7 @@ exports.ProjectsService = ProjectsService;
 exports.ProjectsService = ProjectsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_1.PrismaService,
-        calendar_1.CalendarService])
+        calendar_1.CalendarService,
+        notifications_1.NotificationsService])
 ], ProjectsService);
 //# sourceMappingURL=projects.service.js.map

@@ -44,14 +44,14 @@ export declare class AuthController {
         id: string;
         createdAt: Date;
         userId: string;
+        device: string | null;
+        ipAddress: string;
         country: string | null;
         city: string | null;
         region: string | null;
         timezone: string | null;
         browser: string | null;
         os: string | null;
-        device: string | null;
-        ipAddress: string;
         userAgent: string;
         isSuccess: boolean;
         failureReason: string | null;

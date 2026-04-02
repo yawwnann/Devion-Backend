@@ -17,13 +17,16 @@ exports.GithubService = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = __importDefault(require("axios"));
 const prisma_1 = require("../prisma");
+const notifications_1 = require("../notifications");
 let GithubService = GithubService_1 = class GithubService {
     prisma;
+    notificationsService;
     logger = new common_1.Logger(GithubService_1.name);
     GITHUB_API = 'https://api.github.com';
     CACHE_DURATION = 1000 * 60 * 30;
-    constructor(prisma) {
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async setUsername(userId, username) {
         const sanitizedUsername = username.trim().toLowerCase();
@@ -1194,10 +1197,102 @@ let GithubService = GithubService_1 = class GithubService {
             throw new common_1.BadRequestException('Failed to trigger workflow');
         }
     }
+    async checkAndNotifyPRReviews(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { githubAccessToken: true, githubUsername: true },
+        });
+        if (!user?.githubAccessToken || !user?.githubUsername) {
+            return;
+        }
+        try {
+            const url = `${this.GITHUB_API}/search/issues?q=is:pr+is:open+review-requested:${user.githubUsername}&sort=updated&order=desc&per_page=10`;
+            const response = await axios_1.default.get(url, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            const prs = response.data.items || [];
+            for (const pr of prs.slice(0, 5)) {
+                const recentNotification = await this.prisma.notification.findFirst({
+                    where: {
+                        userId,
+                        type: 'github',
+                        data: {
+                            path: ['prNumber'],
+                            equals: pr.number,
+                        },
+                        createdAt: {
+                            gte: new Date(Date.now() - 3600000),
+                        },
+                    },
+                });
+                if (recentNotification)
+                    continue;
+                await this.notificationsService.prReviewRequested(userId, pr.number, pr.title, pr.repository_url.replace('https://api.github.com/repos/', ''), pr.html_url);
+            }
+        }
+        catch (error) {
+            this.logger.error(`Error checking PR reviews: ${error.message}`);
+        }
+    }
+    async notifyNewCommits(userId, repoName) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { githubAccessToken: true, githubUsername: true },
+        });
+        if (!user?.githubAccessToken || !user?.githubUsername) {
+            return;
+        }
+        try {
+            const [owner, repo] = repoName.split('/');
+            const url = `${this.GITHUB_API}/repos/${owner}/${repo}/commits?per_page=5`;
+            const response = await axios_1.default.get(url, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            const commits = response.data || [];
+            if (commits.length === 0)
+                return;
+            const latestCommit = commits[0];
+            await this.notificationsService.newCommit(userId, latestCommit.commit.message, latestCommit.sha, repoName, latestCommit.html_url);
+        }
+        catch (error) {
+            this.logger.error(`Error notifying new commits: ${error.message}`);
+        }
+    }
+    async notifyIssueAssigned(userId, repoName, issueNumber) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { githubAccessToken: true },
+        });
+        if (!user?.githubAccessToken) {
+            return;
+        }
+        try {
+            const [owner, repo] = repoName.split('/');
+            const url = `${this.GITHUB_API}/repos/${owner}/${repo}/issues/${issueNumber}`;
+            const response = await axios_1.default.get(url, {
+                headers: {
+                    Authorization: `Bearer ${user.githubAccessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            });
+            const issue = response.data;
+            await this.notificationsService.issueAssigned(userId, issue.number, issue.title, repoName, issue.html_url);
+        }
+        catch (error) {
+            this.logger.error(`Error notifying issue assignment: ${error.message}`);
+        }
+    }
 };
 exports.GithubService = GithubService;
 exports.GithubService = GithubService = GithubService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_1.PrismaService,
+        notifications_1.NotificationsService])
 ], GithubService);
 //# sourceMappingURL=github.service.js.map

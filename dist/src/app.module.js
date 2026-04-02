@@ -25,6 +25,8 @@ const todos_module_1 = require("./todos/todos.module");
 const calendar_1 = require("./calendar");
 const chatbot_module_1 = require("./chatbot/chatbot.module");
 const login_history_1 = require("./login-history");
+const notifications_1 = require("./notifications");
+const preferences_module_1 = require("./preferences/preferences.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -58,6 +60,8 @@ exports.AppModule = AppModule = __decorate([
             calendar_1.CalendarModule,
             chatbot_module_1.ChatbotModule,
             login_history_1.LoginHistoryModule,
+            notifications_1.NotificationsModule,
+            preferences_module_1.PreferencesModule,
         ],
         providers: [
             {

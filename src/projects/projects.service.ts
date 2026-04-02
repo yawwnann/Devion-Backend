@@ -7,12 +7,15 @@ import * as XLSX from 'xlsx';
 import { PrismaService } from '../prisma';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { CalendarService } from '../calendar';
+import { NotificationsService } from '../notifications';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class ProjectsService {
   constructor(
     private prisma: PrismaService,
     private calendarService: CalendarService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(userId: string, dto: CreateProjectDto) {
@@ -75,6 +78,15 @@ export class ProjectsService {
   async update(id: string, userId: string, dto: UpdateProjectDto) {
     await this.findOne(id, userId);
 
+    // Get the current project to check for changes
+    const currentProject = await this.prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!currentProject) {
+      throw new NotFoundException('Project not found');
+    }
+
     // Convert date strings to DateTime objects
     const data: any = { ...dto };
 
@@ -98,6 +110,17 @@ export class ProjectsService {
       where: { id },
       data,
     });
+
+    // Send notification if status changed
+    if (dto.status && dto.status !== currentProject.status) {
+      await this.notificationsService.projectStatusChanged(
+        userId,
+        project.name,
+        project.id,
+        currentProject.status,
+        dto.status,
+      );
+    }
 
     // Auto-sync to calendar after update
     await this.calendarService.syncFromProjects(userId);

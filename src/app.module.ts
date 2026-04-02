@@ -16,6 +16,8 @@ import { TodosModule } from './todos/todos.module';
 import { CalendarModule } from './calendar';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { LoginHistoryModule } from './login-history';
+import { NotificationsModule } from './notifications';
+import { PreferencesModule } from './preferences/preferences.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { LoginHistoryModule } from './login-history';
     CalendarModule,
     ChatbotModule,
     LoginHistoryModule,
+    NotificationsModule,
+    PreferencesModule,
   ],
   providers: [
     {

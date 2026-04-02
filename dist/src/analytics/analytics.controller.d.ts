@@ -26,4 +26,5 @@ export declare class AnalyticsController {
         date: string;
         count: number;
     }[]>;
+    getProductivity(user: User): Promise<import("./analytics.service").ProductivityStats>;
 }

@@ -11,13 +11,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'getProjects',
-      description: 'Get user projects with optional filtering by status. Use this when user asks about their projects, deadlines, or project status.',
+      description:
+        'Get user projects with optional filtering by status. Use this when user asks about their projects, deadlines, or project status.',
       parameters: {
         type: 'object',
         properties: {
           status: {
             type: 'string',
-            description: 'Filter projects by status: TODO, IN_PROGRESS, DONE, or all',
+            description:
+              'Filter projects by status: TODO, IN_PROGRESS, DONE, or all',
             enum: ['TODO', 'IN_PROGRESS', 'DONE', 'all'],
           },
           limit: {
@@ -33,13 +35,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'getTodos',
-      description: 'Get user todos/tasks with optional filtering by status. Use this when user asks about their tasks, todos, or what they need to do.',
+      description:
+        'Get user todos/tasks with optional filtering by status. Use this when user asks about their tasks, todos, or what they need to do.',
       parameters: {
         type: 'object',
         properties: {
           status: {
             type: 'string',
-            description: 'Filter todos by status: pending, in_progress, done, scheduled, or all',
+            description:
+              'Filter todos by status: pending, in_progress, done, scheduled, or all',
             enum: ['pending', 'in_progress', 'done', 'scheduled', 'all'],
           },
           limit: {
@@ -55,7 +59,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'getCalendarEvents',
-      description: 'Get user calendar events. Use this when user asks about their schedule, calendar, events, meetings, or upcoming deadlines.',
+      description:
+        'Get user calendar events. Use this when user asks about their schedule, calendar, events, meetings, or upcoming deadlines.',
       parameters: {
         type: 'object',
         properties: {
@@ -72,7 +77,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'getGitHubStats',
-      description: 'Get user GitHub statistics including repositories, stars, commits, and language stats. Use this when user asks about their GitHub profile, repositories, or contributions.',
+      description:
+        'Get user GitHub statistics including repositories, stars, commits, and language stats. Use this when user asks about their GitHub profile, repositories, or contributions.',
       parameters: {
         type: 'object',
         properties: {

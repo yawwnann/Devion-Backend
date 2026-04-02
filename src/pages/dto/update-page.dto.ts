@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsDateString,
+} from 'class-validator';
 import { PageStatus } from '../enums/page-status.enum';
 
 export class UpdatePageDto {

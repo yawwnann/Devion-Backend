@@ -13,12 +13,13 @@ const project_settings_service_1 = require("./project-settings.service");
 const projects_controller_1 = require("./projects.controller");
 const prisma_1 = require("../prisma");
 const calendar_1 = require("../calendar");
+const notifications_1 = require("../notifications");
 let ProjectsModule = class ProjectsModule {
 };
 exports.ProjectsModule = ProjectsModule;
 exports.ProjectsModule = ProjectsModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_1.PrismaModule, calendar_1.CalendarModule],
+        imports: [prisma_1.PrismaModule, calendar_1.CalendarModule, notifications_1.NotificationsModule],
         controllers: [projects_controller_1.ProjectsController],
         providers: [projects_service_1.ProjectsService, project_settings_service_1.ProjectSettingsService],
     })

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma';
+import { NotificationsService } from '../notifications';
 import { Request } from 'express';
 
 interface UserAgentInfo {
@@ -10,14 +11,23 @@ interface UserAgentInfo {
 
 @Injectable()
 export class LoginHistoryService {
-  constructor(private prisma: PrismaService) {}
+  private prisma: PrismaService;
+  private notificationsService: NotificationsService;
+
+  constructor(
+    prisma: PrismaService,
+    notificationsService: NotificationsService,
+  ) {
+    this.prisma = prisma;
+    this.notificationsService = notificationsService;
+  }
 
   /**
    * Parse user agent to extract browser, OS, and device info
    */
   private parseUserAgent(userAgent: string): UserAgentInfo {
     const ua = userAgent.toLowerCase();
-    
+
     // Detect browser
     let browser = 'Unknown';
     if (ua.includes('firefox')) {
@@ -44,13 +54,21 @@ export class LoginHistoryService {
       os = 'Linux';
     } else if (ua.includes('android')) {
       os = 'Android';
-    } else if (ua.includes('ios') || ua.includes('iphone') || ua.includes('ipad')) {
+    } else if (
+      ua.includes('ios') ||
+      ua.includes('iphone') ||
+      ua.includes('ipad')
+    ) {
       os = 'iOS';
     }
 
     // Detect device
     let device = 'Desktop';
-    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+    if (
+      ua.includes('mobile') ||
+      ua.includes('android') ||
+      ua.includes('iphone')
+    ) {
       device = 'Mobile';
     } else if (ua.includes('tablet') || ua.includes('ipad')) {
       device = 'Tablet';
@@ -71,11 +89,15 @@ export class LoginHistoryService {
     try {
       // Remove IPv6 prefix if present
       const cleanIp = ip.replace(/^::ffff:/, '');
-      
+
       // Skip localhost and private IPs
-      if (cleanIp === '127.0.0.1' || cleanIp === 'localhost' || 
-          cleanIp.startsWith('192.168.') || cleanIp.startsWith('10.') ||
-          cleanIp.startsWith('172.')) {
+      if (
+        cleanIp === '127.0.0.1' ||
+        cleanIp === 'localhost' ||
+        cleanIp.startsWith('192.168.') ||
+        cleanIp.startsWith('10.') ||
+        cleanIp.startsWith('172.')
+      ) {
         return {
           country: 'Local Network',
           city: 'Localhost',
@@ -149,6 +171,57 @@ export class LoginHistoryService {
           failureReason,
         },
       });
+
+      // Send security notification for successful login
+      if (userId && isSuccess) {
+        const locationString = location.city
+          ? `${location.city}${location.country ? ', ' + location.country : ''}`
+          : location.country || 'Unknown location';
+
+        // Check if this is a new device (simplified check - in production you'd want to store device fingerprints)
+        const recentLogins = await this.prisma.loginHistory.findMany({
+          where: {
+            userId,
+            device,
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+            },
+          },
+          take: 1,
+        });
+
+        const isNewDevice = recentLogins.length === 0;
+
+        if (isNewDevice) {
+          await this.notificationsService.newDeviceLogin(
+            userId,
+            `${browser} on ${os}`,
+            locationString,
+            ipAddress,
+          );
+        } else {
+          await this.notificationsService.newLogin(
+            userId,
+            `${browser} on ${os}`,
+            locationString,
+            ipAddress,
+          );
+        }
+      }
+
+      // Send notification for failed login attempt
+      if (userId && !isSuccess && failureReason) {
+        const locationString = location.city
+          ? `${location.city}${location.country ? ', ' + location.country : ''}`
+          : location.country || 'Unknown location';
+
+        await this.notificationsService.failedLoginAttempt(
+          userId,
+          `${browser} on ${os}`,
+          locationString,
+          ipAddress,
+        );
+      }
     } catch (error) {
       console.error('Failed to log login history:', error);
     }

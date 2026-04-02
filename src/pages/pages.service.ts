@@ -71,7 +71,9 @@ export class PagesService {
         },
       },
     });
-    console.log(`[PagesService] findPublished: found ${result.length} published pages`);
+    console.log(
+      `[PagesService] findPublished: found ${result.length} published pages`,
+    );
     return result;
   }
 

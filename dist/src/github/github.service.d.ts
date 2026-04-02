@@ -1,4 +1,5 @@
 import { PrismaService } from '../prisma';
+import { NotificationsService } from '../notifications';
 import type { GitHubIssueSearchItem, GitHubReview } from './github.types';
 export interface FormattedWorkflowRun {
     id: number;
@@ -22,10 +23,11 @@ export interface FormattedWorkflowRun {
 }
 export declare class GithubService {
     private prisma;
+    private notificationsService;
     private readonly logger;
     private readonly GITHUB_API;
     private readonly CACHE_DURATION;
-    constructor(prisma: PrismaService);
+    constructor(prisma: PrismaService, notificationsService: NotificationsService);
     setUsername(userId: string, username: string): Promise<{
         synced: number;
     }>;
@@ -36,7 +38,6 @@ export declare class GithubService {
         hasToken: boolean;
     }>;
     getRepos(userId: string): Promise<{
-        url: string;
         name: string;
         id: string;
         createdAt: Date;
@@ -46,6 +47,7 @@ export declare class GithubService {
         description: string | null;
         repoId: number;
         fullName: string;
+        url: string;
         language: string | null;
         stars: number;
         forks: number;
@@ -236,14 +238,14 @@ export declare class GithubService {
         }[];
     }>;
     getCommitsForTodo(userId: string, todoId: string): Promise<{
-        url: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         todoId: string;
+        url: string;
+        message: string;
         additions: number;
         deletions: number;
-        message: string;
         sha: string;
         author: string;
         authorEmail: string | null;
@@ -333,4 +335,7 @@ export declare class GithubService {
     triggerWorkflow(userId: string, repoName: string, workflowId: string, branch?: string): Promise<{
         message: string;
     }>;
+    checkAndNotifyPRReviews(userId: string): Promise<void>;
+    notifyNewCommits(userId: string, repoName: string): Promise<void>;
+    notifyIssueAssigned(userId: string, repoName: string, issueNumber: number): Promise<void>;
 }

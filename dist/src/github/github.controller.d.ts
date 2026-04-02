@@ -14,7 +14,6 @@ export declare class GithubController {
         hasToken: boolean;
     }>;
     getRepos(user: User): Promise<{
-        url: string;
         name: string;
         id: string;
         createdAt: Date;
@@ -24,6 +23,7 @@ export declare class GithubController {
         description: string | null;
         repoId: number;
         fullName: string;
+        url: string;
         language: string | null;
         stars: number;
         forks: number;

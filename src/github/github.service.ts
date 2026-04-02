@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma';
+import { NotificationsService } from '../notifications';
 import type {
   GitHubUser,
   GitHubRepository,
@@ -114,7 +115,10 @@ export class GithubService {
   private readonly GITHUB_API = 'https://api.github.com';
   private readonly CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async setUsername(userId: string, username: string) {
     // Sanitize username
@@ -170,6 +174,7 @@ export class GithubService {
       } catch {
         throw new BadRequestException('Invalid GitHub token');
       }
+      
     }
 
     await this.prisma.user.update({
@@ -1779,6 +1784,147 @@ export class GithubService {
     } catch (error) {
       this.logger.error(`Failed to trigger workflow: ${error}`);
       throw new BadRequestException('Failed to trigger workflow');
+    }
+  }
+
+  // ==================== NOTIFICATION HELPERS ====================
+
+  /**
+   * Check for new PR review requests and send notifications
+   */
+  async checkAndNotifyPRReviews(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { githubAccessToken: true, githubUsername: true },
+    });
+
+    if (!user?.githubAccessToken || !user?.githubUsername) {
+      return;
+    }
+
+    try {
+      // Get PRs that are requesting review from the user
+      const url = `${this.GITHUB_API}/search/issues?q=is:pr+is:open+review-requested:${user.githubUsername}&sort=updated&order=desc&per_page=10`;
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${user.githubAccessToken}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      const prs = response.data.items || [];
+
+      for (const pr of prs.slice(0, 5)) {
+        // Check if we already notified for this PR in the last hour
+        const recentNotification = await this.prisma.notification.findFirst({
+          where: {
+            userId,
+            type: 'github',
+            data: {
+              path: ['prNumber'],
+              equals: pr.number,
+            },
+            createdAt: {
+              gte: new Date(Date.now() - 3600000), // 1 hour ago
+            },
+          },
+        });
+
+        if (recentNotification) continue;
+
+        // Send notification
+        await this.notificationsService.prReviewRequested(
+          userId,
+          pr.number,
+          pr.title,
+          pr.repository_url.replace('https://api.github.com/repos/', ''),
+          pr.html_url,
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Error checking PR reviews: ${error.message}`);
+    }
+  }
+
+  /**
+   * Notify user about new commits in their repositories
+   */
+  async notifyNewCommits(userId: string, repoName: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { githubAccessToken: true, githubUsername: true },
+    });
+
+    if (!user?.githubAccessToken || !user?.githubUsername) {
+      return;
+    }
+
+    try {
+      const [owner, repo] = repoName.split('/');
+      const url = `${this.GITHUB_API}/repos/${owner}/${repo}/commits?per_page=5`;
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${user.githubAccessToken}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      const commits = response.data || [];
+
+      if (commits.length === 0) return;
+
+      const latestCommit = commits[0];
+
+      await this.notificationsService.newCommit(
+        userId,
+        latestCommit.commit.message,
+        latestCommit.sha,
+        repoName,
+        latestCommit.html_url,
+      );
+    } catch (error) {
+      this.logger.error(`Error notifying new commits: ${error.message}`);
+    }
+  }
+
+  /**
+   * Notify user when they are assigned to an issue
+   */
+  async notifyIssueAssigned(
+    userId: string,
+    repoName: string,
+    issueNumber: number,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { githubAccessToken: true },
+    });
+
+    if (!user?.githubAccessToken) {
+      return;
+    }
+
+    try {
+      const [owner, repo] = repoName.split('/');
+      const url = `${this.GITHUB_API}/repos/${owner}/${repo}/issues/${issueNumber}`;
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${user.githubAccessToken}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      const issue = response.data;
+
+      await this.notificationsService.issueAssigned(
+        userId,
+        issue.number,
+        issue.title,
+        repoName,
+        issue.html_url,
+      );
+    } catch (error) {
+      this.logger.error(`Error notifying issue assignment: ${error.message}`);
     }
   }
 }

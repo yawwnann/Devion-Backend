@@ -40,4 +40,9 @@ export class AnalyticsController {
       days ? parseInt(days) : 30,
     );
   }
+
+  @Get('productivity')
+  getProductivity(@CurrentUser() user: User) {
+    return this.analyticsService.getProductivity(user.id);
+  }
 }
